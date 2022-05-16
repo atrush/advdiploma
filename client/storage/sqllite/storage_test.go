@@ -1,10 +1,13 @@
 package sqllite
 
-import "advdiploma/client/model"
+import (
+	"advdiploma/client/model"
+	"advdiploma/client/services"
+)
 
 func (s *TestSuite) TestStorage_Add_Get() {
 	s.Run("Add and read secret", func() {
-		secret, err := model.TestCard.ToSecret()
+		secret, err := services.ToSecret(model.TestCard.Info, model.TestCard)
 		s.Require().NoError(err)
 
 		id, err := s.storage.AddSecret(secret, 2)

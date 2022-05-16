@@ -1,11 +1,5 @@
 package model
 
-import (
-	"encoding/base64"
-	"encoding/json"
-	"log"
-)
-
 var (
 	SecretTypes = map[string]int{
 		"CARD":   1,
@@ -22,6 +16,10 @@ type Info struct {
 	Description string
 }
 
+type Informer interface {
+	GetInfo() Info
+}
+
 //Cardholder name
 //PAN (Primary Account Number) (the 16 digit number on the front of the card)
 //Expiration date
@@ -35,35 +33,11 @@ type Card struct {
 	ServiceCode     int    `json:"code"`
 }
 
-func (c *Card) ToSecret() (Secret, error) {
-
-	js, err := json.Marshal(c)
-	if err != nil {
-		return Secret{}, err
-	}
-	based64 := base64.StdEncoding.EncodeToString(js)
-
-	s := Secret{
-		Info: c.Info,
-		Data: based64,
-	}
-	return s, nil
+func (c *Card) GetInfo() Info {
+	return c.Info
 }
 
-func (c *Card) ReadFromSecret(s Secret) error {
-	data, err := base64.StdEncoding.DecodeString(s.Data)
-	if err != nil {
-		log.Fatal("error:", err)
-	}
-
-	if err := json.Unmarshal(data, c); err != nil {
-		return err
-	}
-
-	c.Info = s.Info
-
-	return nil
-}
+var _ Informer = (*Card)(nil)
 
 type Auth struct {
 	Info     Info   `json:"-"`
@@ -71,11 +45,19 @@ type Auth struct {
 	Password string `json:"password"`
 }
 
+func (a *Auth) GetInfo() Info {
+	return a.Info
+}
+
 type Binary struct {
 	Info        Info `json:"-"`
 	Data        []byte
 	ContentType string
 	Filename    string
+}
+
+func (b *Binary) GetInfo() Info {
+	return b.Info
 }
 
 type Secret struct {
