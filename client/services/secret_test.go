@@ -2,16 +2,27 @@ package services
 
 import (
 	"advdiploma/client/model"
+	"advdiploma/client/pkg"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func TestCard_ToSecret(t *testing.T) {
+func GetTestSecretSvc() *SecretService {
+	cfg := &pkg.Config{
+		MasterKey: "testKey",
+	}
 
-	secret, err := ToSecret(model.TestCard.Info, model.TestCard)
+	svcSecret := NewSecret(cfg)
+	return &svcSecret
+}
+
+func TestCard_ToSecret(t *testing.T) {
+	secretSvc := GetTestSecretSvc()
+
+	secret, err := secretSvc.ToSecret(model.TestCard.Info, model.TestCard)
 	require.NoError(t, err)
 
-	resObj, err := ReadFromSecret(secret)
+	resObj, err := secretSvc.ReadFromSecret(secret)
 	require.NoError(t, err)
 
 	resCard, ok := resObj.(model.Card)

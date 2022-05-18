@@ -2,13 +2,23 @@ package services
 
 import (
 	"advdiploma/client/model"
-	"encoding/base64"
+	"advdiploma/client/pkg"
 	"encoding/json"
 	"errors"
 	"log"
 )
 
-func ToSecret(info model.Info, el interface{}) (model.Secret, error) {
+type SecretService struct {
+	cfg *pkg.Config
+}
+
+func NewSecret(cfg *pkg.Config) SecretService {
+	return SecretService{
+		cfg: cfg,
+	}
+}
+
+func (s *SecretService) ToSecret(info model.Info, el interface{}) (model.Secret, error) {
 
 	var data []byte
 	var errMarshal error
@@ -32,28 +42,32 @@ func ToSecret(info model.Info, el interface{}) (model.Secret, error) {
 	}
 
 	//  encode data
-	based64 := base64.StdEncoding.EncodeToString(data)
+	encrypted, err := pkg.Encode(data, s.cfg.MasterKey)
+	if err != nil {
+		return model.Secret{}, err
+	}
 
 	return model.Secret{
 		Info: info,
-		Data: based64,
+		Data: encrypted,
 	}, nil
 }
 
-func ReadFromSecret(s model.Secret) (interface{}, error) {
-	data, err := base64.StdEncoding.DecodeString(s.Data)
+func (s *SecretService) ReadFromSecret(el model.Secret) (interface{}, error) {
+
+	data, err := pkg.Decode(el.Data, s.cfg.MasterKey)
 	if err != nil {
 		log.Fatal("error:", err)
 	}
 
-	switch s.Info.TypeID {
+	switch el.Info.TypeID {
 	case model.SecretTypes["CARD"]:
 		var card model.Card
 		if err := json.Unmarshal(data, &card); err != nil {
 			return nil, errors.New("object is not Card type")
 		}
 
-		card.Info = s.Info
+		card.Info = el.Info
 
 		return card, nil
 	}
