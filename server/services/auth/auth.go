@@ -14,8 +14,7 @@ import (
 var _ Authenticator = (*Auth)(nil)
 
 const (
-	salt             = "nJkksjjdxszx120_dssd!xc"
-	contextKeyUserID = "user-id"
+	salt = "nJkksjjdxszx120_dssd!xc"
 )
 
 //  Auth implements Authenticator interface methods for user authorisation.
@@ -75,8 +74,11 @@ func (a *Auth) Authenticate(ctx context.Context, login string, password string) 
 }
 
 //  EncodeTokenUserID encodes token with user_id claim.
-func (a *Auth) EncodeTokenUserID(userID uuid.UUID) (string, error) {
-	_, tokenString, err := a.tokenAuth.Encode(map[string]interface{}{"user_id": userID.String()})
+func (a *Auth) EncodeTokenUserID(userID uuid.UUID, deviceID uuid.UUID) (string, error) {
+	_, tokenString, err := a.tokenAuth.Encode(map[string]interface{}{
+		"user_id":   userID.String(),
+		"device_id": deviceID.String(),
+	})
 	if err != nil {
 		return "", fmt.Errorf("ошибка генерации токена для пользователя: %w", err)
 	}

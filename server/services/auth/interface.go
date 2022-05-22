@@ -10,5 +10,5 @@ import (
 type Authenticator interface {
 	CreateUser(ctx context.Context, login string, password string) (model.User, error)
 	Authenticate(ctx context.Context, login string, password string) (model.User, error)
-	EncodeTokenUserID(userID uuid.UUID) (string, error)
+	EncodeTokenUserID(userID uuid.UUID, deviceID uuid.UUID) (string, error)
 }

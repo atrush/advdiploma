@@ -13,9 +13,9 @@ type (
 	}
 
 	Secret struct {
-		ID       int64
-		UserID   int64
-		ClientID int64
+		ID       uuid.UUID
+		UserID   uuid.UUID
+		DeviceID uuid.UUID
 		Data     string
 	}
 )
