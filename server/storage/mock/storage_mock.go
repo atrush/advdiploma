@@ -11,6 +11,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 )
 
 // MockStorage is a mock of Storage interface.
@@ -156,7 +157,7 @@ func (mr *MockSecretRepositoryMockRecorder) Add(ctx, secret interface{}) *gomock
 }
 
 // Get mocks base method.
-func (m *MockSecretRepository) Get(ctx context.Context, id int64) (model.Secret, error) {
+func (m *MockSecretRepository) Get(ctx context.Context, id uuid.UUID) (model.Secret, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, id)
 	ret0, _ := ret[0].(model.Secret)

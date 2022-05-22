@@ -3,6 +3,7 @@ package storage
 import (
 	"advdiploma/server/model"
 	"context"
+	"github.com/google/uuid"
 )
 
 type Storage interface {
@@ -21,5 +22,5 @@ type UserRepository interface {
 
 type SecretRepository interface {
 	Add(ctx context.Context, secret model.Secret) (model.Secret, error)
-	Get(ctx context.Context, id int64) (model.Secret, error)
+	Get(ctx context.Context, id uuid.UUID) (model.Secret, error)
 }
