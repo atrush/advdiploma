@@ -23,7 +23,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//  authenticate and get user.
-	user, err := h.svcAuth.CreateUser(r.Context(), loginData.Login, loginData.Password)
+	user, err := h.svcAuth.CreateUser(r.Context(), loginData.Login, loginData.Password, loginData.MasterHash)
 	if err != nil {
 		//  if exist returns 409.
 		if errors.Is(err, model.ErrorConflictSaveUser) {
@@ -54,7 +54,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//  authenticate and get user.
-	user, err := h.svcAuth.Authenticate(r.Context(), loginData.Login, loginData.Password)
+	user, err := h.svcAuth.Authenticate(r.Context(), loginData.Login, loginData.Password, loginData.MasterHash)
 	if err != nil {
 		//  if wrong login,password return 401.
 		if errors.Is(err, model.ErrorWrongAuthData) {

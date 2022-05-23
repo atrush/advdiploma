@@ -11,6 +11,7 @@ func (s *TestSuite) TestUsers_CreateUser() {
 	user := model.User{
 		Login:        fake.CharactersN(8),
 		PasswordHash: fake.CharactersN(60),
+		MasterHash:   fake.CharactersN(60),
 	}
 
 	s.Run("Create non-existing user", func() {
@@ -19,6 +20,7 @@ func (s *TestSuite) TestUsers_CreateUser() {
 
 		s.Assert().EqualValues(user.Login, res.Login)
 		s.Assert().EqualValues(user.PasswordHash, res.PasswordHash)
+		s.Assert().EqualValues(user.MasterHash, res.MasterHash)
 		s.Assert().NotEqual(uuid.Nil, res.ID)
 	})
 

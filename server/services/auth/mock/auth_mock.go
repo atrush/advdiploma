@@ -9,7 +9,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v5 "github.com/go-chi/jwtauth/v5"
+	jwtauth "github.com/go-chi/jwtauth/v5"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
 )
@@ -38,37 +38,37 @@ func (m *MockAuthenticator) EXPECT() *MockAuthenticatorMockRecorder {
 }
 
 // Authenticate mocks base method.
-func (m *MockAuthenticator) Authenticate(ctx context.Context, login, password string) (model.User, error) {
+func (m *MockAuthenticator) Authenticate(ctx context.Context, login, password, masterHash string) (model.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Authenticate", ctx, login, password)
+	ret := m.ctrl.Call(m, "Authenticate", ctx, login, password, masterHash)
 	ret0, _ := ret[0].(model.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Authenticate indicates an expected call of Authenticate.
-func (mr *MockAuthenticatorMockRecorder) Authenticate(ctx, login, password interface{}) *gomock.Call {
+func (mr *MockAuthenticatorMockRecorder) Authenticate(ctx, login, password, masterHash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authenticate", reflect.TypeOf((*MockAuthenticator)(nil).Authenticate), ctx, login, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authenticate", reflect.TypeOf((*MockAuthenticator)(nil).Authenticate), ctx, login, password, masterHash)
 }
 
 // CreateUser mocks base method.
-func (m *MockAuthenticator) CreateUser(ctx context.Context, login, password string) (model.User, error) {
+func (m *MockAuthenticator) CreateUser(ctx context.Context, login, password, masterHash string) (model.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUser", ctx, login, password)
+	ret := m.ctrl.Call(m, "CreateUser", ctx, login, password, masterHash)
 	ret0, _ := ret[0].(model.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateUser indicates an expected call of CreateUser.
-func (mr *MockAuthenticatorMockRecorder) CreateUser(ctx, login, password interface{}) *gomock.Call {
+func (mr *MockAuthenticatorMockRecorder) CreateUser(ctx, login, password, masterHash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockAuthenticator)(nil).CreateUser), ctx, login, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockAuthenticator)(nil).CreateUser), ctx, login, password, masterHash)
 }
 
 // EncodeTokenUserID mocks base method.
-func (m *MockAuthenticator) EncodeTokenUserID(userID, deviceID uuid.UUID, tokenAuth *v5.JWTAuth) (string, error) {
+func (m *MockAuthenticator) EncodeTokenUserID(userID, deviceID uuid.UUID, tokenAuth *jwtauth.JWTAuth) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EncodeTokenUserID", userID, deviceID, tokenAuth)
 	ret0, _ := ret[0].(string)

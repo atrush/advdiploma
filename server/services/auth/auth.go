@@ -26,24 +26,27 @@ type Auth struct {
 //  NewAuth init new Auth.
 func NewAuth(s storage.Storage) (*Auth, error) {
 	return &Auth{
-		//tokenAuth: jwtauth.New("HS256", []byte("secret"), nil),
 		storage: s,
 	}, nil
 }
 
 //  CreateUser creates new user.
 //  If user exist, returns ErrorUserAlreadyExist.
-func (a *Auth) CreateUser(ctx context.Context, login string, password string) (model.User, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password+salt), 10)
-	l := len(hash)
-	fmt.Printf("length:%v", l)
+func (a *Auth) CreateUser(ctx context.Context, login string, password string, masterHash string) (model.User, error) {
+	loginHash, err := bcrypt.GenerateFromPassword([]byte(password+salt), 10)
+	if err != nil {
+		return model.User{}, fmt.Errorf("ошибка добавления пользователя: %w", err)
+	}
+
+	masterHashHash, err := bcrypt.GenerateFromPassword([]byte(masterHash+salt), 10)
 	if err != nil {
 		return model.User{}, fmt.Errorf("ошибка добавления пользователя: %w", err)
 	}
 
 	user := model.User{
 		Login:        login,
-		PasswordHash: string(hash),
+		PasswordHash: string(loginHash),
+		MasterHash:   string(masterHashHash),
 	}
 
 	user, err = a.storage.User().Create(ctx, user)
@@ -56,7 +59,7 @@ func (a *Auth) CreateUser(ctx context.Context, login string, password string) (m
 
 //  Authenticate checks user login, password and return.
 //  If user not founded, or wrong password, returns ErrorWrongAuthData.
-func (a *Auth) Authenticate(ctx context.Context, login string, password string) (model.User, error) {
+func (a *Auth) Authenticate(ctx context.Context, login string, password string, masterHash string) (model.User, error) {
 	user, err := a.storage.User().GetByLogin(ctx, login)
 	if err != nil {
 		if errors.Is(err, model.ErrorItemNotFound) {
@@ -67,6 +70,10 @@ func (a *Auth) Authenticate(ctx context.Context, login string, password string) 
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password+salt)); err != nil {
+		return model.User{}, model.ErrorWrongAuthData
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(masterHash+salt)); err != nil {
 		return model.User{}, model.ErrorWrongAuthData
 	}
 

@@ -48,8 +48,6 @@ func (s *TestSuite) TestSecret_AddGet() {
 		s.Assert().EqualValues(secret.DeviceID, secretRes.DeviceID)
 		s.Assert().EqualValues(secret.Data, secretRes.Data)
 		s.Assert().EqualValues(secret.IsDeleted, secretRes.IsDeleted)
-		s.Assert().EqualValues(secret.UploadedAt, secretRes.UploadedAt)
-		s.Assert().EqualValues(secret.DeletedAt, secretRes.DeletedAt)
 
 	})
 

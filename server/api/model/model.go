@@ -9,9 +9,10 @@ type (
 	ContextKey string
 
 	LoginRequest struct {
-		Login    string    `json:"login"`
-		Password string    `json:"password"`
-		DeviceID uuid.UUID `json:"device_id"`
+		Login      string    `json:"login"`
+		MasterHash string    `json:"master_hash"`
+		Password   string    `json:"password"`
+		DeviceID   uuid.UUID `json:"device_id"`
 	}
 
 	UserContextData struct {
@@ -29,6 +30,9 @@ func (r LoginRequest) Validate() error {
 	}
 	if len(r.Password) < 3 {
 		return fmt.Errorf("password must be larger then 3 symbols")
+	}
+	if len(r.MasterHash) < 3 {
+		return fmt.Errorf("master hash must be larger then 3 symbols")
 	}
 	if r.DeviceID == uuid.Nil {
 		return fmt.Errorf("device id is empty")

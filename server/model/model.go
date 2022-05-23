@@ -11,6 +11,7 @@ type (
 		ID           uuid.UUID
 		Login        string
 		PasswordHash string
+		MasterHash   string
 	}
 
 	Secret struct {

@@ -30,10 +30,11 @@ func newUserRepository(db *sql.DB) *userRepository {
 func (u *userRepository) Create(ctx context.Context, user model.User) (model.User, error) {
 	err := u.db.QueryRowContext(
 		ctx,
-		"INSERT INTO users (login, pass_hash) VALUES ($1, $2) RETURNING id, login, pass_hash",
+		"INSERT INTO users (login, pass_hash, master_hash) VALUES ($1, $2, $3) RETURNING id, login, pass_hash, master_hash",
 		user.Login,
 		user.PasswordHash,
-	).Scan(&user.ID, &user.Login, &user.PasswordHash)
+		user.MasterHash,
+	).Scan(&user.ID, &user.Login, &user.PasswordHash, &user.MasterHash)
 
 	if err != nil {
 		//  if exist return ErrorConflictSaveUser
@@ -57,9 +58,9 @@ func (u *userRepository) GetByLogin(ctx context.Context, login string) (model.Us
 	}
 
 	if err := u.db.QueryRowContext(ctx,
-		`SELECT id, login, pass_hash FROM users WHERE login = $1`,
+		`SELECT id, login, pass_hash, master_hash FROM users WHERE login = $1`,
 		login,
-	).Scan(&user.ID, &user.Login, &user.PasswordHash); err != nil {
+	).Scan(&user.ID, &user.Login, &user.PasswordHash, &user.MasterHash); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.User{}, model.ErrorItemNotFound
 		}

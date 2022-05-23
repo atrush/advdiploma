@@ -23,9 +23,10 @@ var (
 	}
 
 	mockLogin = apimodel.LoginRequest{
-		Login:    mockUser.Login,
-		Password: fake.CharactersN(10),
-		DeviceID: uuid.New(),
+		Login:      mockUser.Login,
+		Password:   fake.CharactersN(10),
+		DeviceID:   uuid.New(),
+		MasterHash: fake.CharactersN(32),
 	}
 
 	reqAuth = mustMarshalLogin(mockLogin)
@@ -220,35 +221,35 @@ func authEmpty(ctrl *gomock.Controller) *mk.MockAuthenticator {
 /* Mocks for authenticate handler */
 func authOk(ctrl *gomock.Controller) *mk.MockAuthenticator {
 	authMock := mk.NewMockAuthenticator(ctrl)
-	authMock.EXPECT().Authenticate(gomock.Any(), gomock.Any(), gomock.Any()).Return(mockUser, nil)
+	authMock.EXPECT().Authenticate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(mockUser, nil)
 	authMock.EXPECT().EncodeTokenUserID(mockUser.ID, mockLogin.DeviceID, gomock.Any()).Return("tokentoken", nil)
 	return authMock
 }
 func authErrWrongPass(ctrl *gomock.Controller) *mk.MockAuthenticator {
 	authMock := mk.NewMockAuthenticator(ctrl)
-	authMock.EXPECT().Authenticate(gomock.Any(), gomock.Any(), gomock.Any()).Return(model.User{}, model.ErrorWrongAuthData)
+	authMock.EXPECT().Authenticate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(model.User{}, model.ErrorWrongAuthData)
 	return authMock
 }
 func authErrServer(ctrl *gomock.Controller) *mk.MockAuthenticator {
 	authMock := mk.NewMockAuthenticator(ctrl)
-	authMock.EXPECT().Authenticate(gomock.Any(), gomock.Any(), gomock.Any()).Return(model.User{}, errors.New("server error"))
+	authMock.EXPECT().Authenticate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(model.User{}, errors.New("server error"))
 	return authMock
 }
 
 /* Mocks for register handler */
 func registerOk(ctrl *gomock.Controller) *mk.MockAuthenticator {
 	authMock := mk.NewMockAuthenticator(ctrl)
-	authMock.EXPECT().CreateUser(gomock.Any(), gomock.Any(), gomock.Any()).Return(mockUser, nil)
+	authMock.EXPECT().CreateUser(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(mockUser, nil)
 	authMock.EXPECT().EncodeTokenUserID(mockUser.ID, mockLogin.DeviceID, gomock.Any()).Return("tokentoken", nil)
 	return authMock
 }
 func registerErrServer(ctrl *gomock.Controller) *mk.MockAuthenticator {
 	authMock := mk.NewMockAuthenticator(ctrl)
-	authMock.EXPECT().CreateUser(gomock.Any(), gomock.Any(), gomock.Any()).Return(model.User{}, errors.New("server error"))
+	authMock.EXPECT().CreateUser(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(model.User{}, errors.New("server error"))
 	return authMock
 }
 func registerErrExist(ctrl *gomock.Controller) *mk.MockAuthenticator {
 	authMock := mk.NewMockAuthenticator(ctrl)
-	authMock.EXPECT().CreateUser(gomock.Any(), gomock.Any(), gomock.Any()).Return(model.User{}, model.ErrorConflictSaveUser)
+	authMock.EXPECT().CreateUser(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(model.User{}, model.ErrorConflictSaveUser)
 	return authMock
 }
