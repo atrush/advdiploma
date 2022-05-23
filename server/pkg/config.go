@@ -5,14 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
-	"log"
-	"os"
 )
 
 //  Config stores server config params.
 type Config struct {
 	ServerPort  string `env:"SEC_SERVER_ADDRESS" json:"server_address"  validate:"required,hostname_port"`
 	DatabaseDSN string `env:"SEC_DATABASE_DSN" json:"database_dsn"  validate:"-"`
+	TableName   string `env:"SEC_TABLE" json:"table"  validate:"-"`
 	EnableHTTPS bool   `env:"SEC_ENABLE_HTTPS" json:"enable_https" envDefault:"false" validate:"-"`
 
 	Debug   bool `env:"SEC_DEBUG" json:"-" envDefault:"false" validate:"-"`
@@ -23,6 +22,7 @@ type Config struct {
 const (
 	defServerPort  = ":8080"
 	defDatabaseDSN = "postgres://postgres:postgres@localhost:5432/tst_00?sslmode=disable"
+	defTable       = "tst_00"
 	defEnableHTTPS = false
 
 	defDebug   = false
@@ -64,20 +64,20 @@ func (c *Config) readFlagConfig() {
 	flag.StringVar(&flagConfig.DatabaseDSN, "d", defDatabaseDSN, "database connection string")
 	flag.BoolVar(&flagConfig.EnableHTTPS, "https", defEnableHTTPS, "enable https")
 
-	devFlags := flag.NewFlagSet("dev", flag.ExitOnError)
-	devFlags.BoolVar(&flagConfig.Debug, "debug", defDebug, "enable debug mode")
-	devFlags.BoolVar(&flagConfig.Migrate, "migrate", defMigrate, "enable migrate database")
+	//devFlags := flag.NewFlagSet("dev", flag.ExitOnError)
+	flag.BoolVar(&flagConfig.Migrate, "migrate", defMigrate, "enable migrate database")
+	flag.StringVar(&flagConfig.TableName, "t", defTable, "table name")
 
-	switch os.Args[1] {
-	//  in dev mode use defaults and dev flags
-	case "dev":
-		if err := devFlags.Parse(os.Args[2:]); err != nil {
-			log.Fatal("error parsing flags")
-		}
-	default:
-		flag.Parse()
-	}
-
+	//switch os.Args[1] {
+	////  in dev mode use defaults and dev flags
+	//case "dev":
+	//	if err := devFlags.Parse(os.Args[2:]); err != nil {
+	//		log.Fatal("error parsing flags")
+	//	}
+	//default:
+	//	flag.Parse()
+	//}
+	flag.Parse()
 	c.redefineConfig(flagConfig)
 }
 
@@ -91,6 +91,10 @@ func (c *Config) redefineConfig(nc *Config) {
 
 	if nc.DatabaseDSN != "" {
 		c.DatabaseDSN = nc.DatabaseDSN
+	}
+
+	if nc.TableName != "" {
+		c.TableName = nc.TableName
 	}
 
 	if nc.EnableHTTPS {
