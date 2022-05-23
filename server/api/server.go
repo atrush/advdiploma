@@ -13,6 +13,7 @@ import (
 
 type Server struct {
 	httpServer http.Server
+	cfg        *pkg.Config
 }
 
 func NewServer(cfg *pkg.Config, a auth.Authenticator, secret secret.SecretManager) (*Server, error) {
@@ -27,12 +28,31 @@ func NewServer(cfg *pkg.Config, a auth.Authenticator, secret secret.SecretManage
 			Addr:    cfg.ServerPort,
 			Handler: handler.GetRouter(h),
 		},
+		cfg: cfg,
 	}, nil
+
 }
 
 // Run Start server
 func (s *Server) Run() error {
-	return s.httpServer.ListenAndServe()
+	if s.cfg.EnableHTTPS {
+		certPath, keyPath, err := pkg.GetCertX509Files()
+		if err != nil {
+			return fmt.Errorf("error serve ssl:%w", err)
+		}
+		return handleServerCloseErr(s.httpServer.ListenAndServeTLS(certPath, keyPath))
+	}
+
+	return handleServerCloseErr(s.httpServer.ListenAndServe())
+}
+
+//  returns error if error is not http.ErrServerClosed
+func handleServerCloseErr(err error) error {
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("HTTP server closed with: %w", err)
+	}
+
+	return nil
 }
 
 // Shutdown server

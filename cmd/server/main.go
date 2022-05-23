@@ -65,6 +65,7 @@ func main() {
 	signal.Notify(sigc, os.Interrupt)
 	<-sigc
 
+	log.Println("Graceful shutting down")
 	ctxShutdown, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
