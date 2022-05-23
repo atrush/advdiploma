@@ -50,7 +50,7 @@ func readClaims(claims map[string]interface{}) (model.UserContextData, error) {
 		return model.UserContextData{}, errors.New("user id is empty")
 	}
 	userID, err := uuid.Parse(objUserID.(string))
-	if err != nil {
+	if err != nil || userID == uuid.Nil {
 		return model.UserContextData{}, errors.New("wrong user id")
 	}
 
@@ -59,7 +59,7 @@ func readClaims(claims map[string]interface{}) (model.UserContextData, error) {
 		return model.UserContextData{}, errors.New("device id is empty")
 	}
 	deviceID, err := uuid.Parse(objDeviceID.(string))
-	if !ok {
+	if err != nil || deviceID == uuid.Nil {
 		return model.UserContextData{}, errors.New("wrong device id")
 	}
 

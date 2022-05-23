@@ -14,14 +14,16 @@ import (
 type Handler struct {
 	svcAuth   auth.Authenticator
 	svcSecret secret.SecretManager
+	jwtAuth   *jwtauth.JWTAuth
 }
 
 // NewHandler Return new handler
-func NewHandler(auth auth.Authenticator, secret secret.SecretManager) (*Handler, error) {
+func NewHandler(auth auth.Authenticator, secret secret.SecretManager, jwtAuth *jwtauth.JWTAuth) (*Handler, error) {
 
 	return &Handler{
 		svcAuth:   auth,
 		svcSecret: secret,
+		jwtAuth:   jwtAuth,
 	}, nil
 }
 
@@ -33,8 +35,8 @@ func GetRouter(handler *Handler) *chi.Mux {
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AllowContentType("application/json"))
-		//r.Post("/api/user/register", handler.Register)
-		//r.Post("/api/user/login", handler.Login)
+		r.Post("/api/user/register", handler.Register)
+		r.Post("/api/user/login", handler.Login)
 	})
 
 	r.Group(func(r chi.Router) {

@@ -9,6 +9,7 @@ import (
 	"advdiploma/server/storage/psql/migrations"
 	"context"
 	"errors"
+	"github.com/go-chi/jwtauth/v5"
 	"log"
 	"net/http"
 	"os"
@@ -38,7 +39,9 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	jwtAuth, err := auth.NewAuth(db)
+	jwtAuth := jwtauth.New("HS256", []byte("secret"), nil)
+
+	svcAuth, err := auth.NewAuth(db)
 	if err != nil {
 		log.Fatalf("error starting auth service:%v", err.Error())
 	}
@@ -48,7 +51,7 @@ func main() {
 		log.Fatalf("error starting secret service:%v", err.Error())
 	}
 
-	server, err := api.NewServer(cfg, jwtAuth, svcSecret)
+	server, err := api.NewServer(cfg, svcAuth, svcSecret, jwtAuth)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

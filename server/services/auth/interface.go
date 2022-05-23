@@ -3,6 +3,7 @@ package auth
 import (
 	"advdiploma/server/model"
 	"context"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 )
 
@@ -10,5 +11,5 @@ import (
 type Authenticator interface {
 	CreateUser(ctx context.Context, login string, password string) (model.User, error)
 	Authenticate(ctx context.Context, login string, password string) (model.User, error)
-	EncodeTokenUserID(userID uuid.UUID, deviceID uuid.UUID) (string, error)
+	EncodeTokenUserID(userID uuid.UUID, deviceID uuid.UUID, tokenAuth *jwtauth.JWTAuth) (string, error)
 }

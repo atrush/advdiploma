@@ -9,6 +9,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	v5 "github.com/go-chi/jwtauth/v5"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
 )
@@ -67,16 +68,16 @@ func (mr *MockAuthenticatorMockRecorder) CreateUser(ctx, login, password interfa
 }
 
 // EncodeTokenUserID mocks base method.
-func (m *MockAuthenticator) EncodeTokenUserID(userID uuid.UUID) (string, error) {
+func (m *MockAuthenticator) EncodeTokenUserID(userID, deviceID uuid.UUID, tokenAuth *v5.JWTAuth) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EncodeTokenUserID", userID)
+	ret := m.ctrl.Call(m, "EncodeTokenUserID", userID, deviceID, tokenAuth)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // EncodeTokenUserID indicates an expected call of EncodeTokenUserID.
-func (mr *MockAuthenticatorMockRecorder) EncodeTokenUserID(userID interface{}) *gomock.Call {
+func (mr *MockAuthenticatorMockRecorder) EncodeTokenUserID(userID, deviceID, tokenAuth interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EncodeTokenUserID", reflect.TypeOf((*MockAuthenticator)(nil).EncodeTokenUserID), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EncodeTokenUserID", reflect.TypeOf((*MockAuthenticator)(nil).EncodeTokenUserID), userID, deviceID, tokenAuth)
 }

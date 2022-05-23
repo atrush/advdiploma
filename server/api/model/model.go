@@ -1,14 +1,39 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"fmt"
+	"github.com/google/uuid"
+)
 
 type (
 	ContextKey string
+
+	LoginRequest struct {
+		Login    string    `json:"login"`
+		Password string    `json:"password"`
+		DeviceID uuid.UUID `json:"device_id"`
+	}
+
+	UserContextData struct {
+		UserID   uuid.UUID
+		DeviceID uuid.UUID
+	}
 )
 
-type UserContextData struct {
-	UserID   uuid.UUID
-	DeviceID uuid.UUID
+func (r LoginRequest) Validate() error {
+	if len(r.Login) < 3 {
+		return fmt.Errorf("login must be larger then 3 symbols")
+	}
+	if len(r.Login) > 60 {
+		return fmt.Errorf("login must be less then 60 symbols")
+	}
+	if len(r.Password) < 3 {
+		return fmt.Errorf("password must be larger then 3 symbols")
+	}
+	if r.DeviceID == uuid.Nil {
+		return fmt.Errorf("device id is empty")
+	}
+	return nil
 }
 
 //

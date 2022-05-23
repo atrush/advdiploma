@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"advdiploma/server/api/model"
+	"advdiploma/server/services/auth"
 	"encoding/json"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
@@ -26,20 +27,14 @@ func TestMiddlewareAuth(t *testing.T) {
 	//  jwtauth init
 	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
 	//  generate jwt token
-	_, tokenString, err := tokenAuth.Encode(map[string]interface{}{
-		"user_id":   userdata.UserID,
-		"device_id": userdata.DeviceID,
-	})
 
-	_, tokenEmptyUserIDString, err := tokenAuth.Encode(map[string]interface{}{
-		"user_id":   "",
-		"device_id": userdata.DeviceID,
-	})
+	tokenString, err := auth.Auth{}.EncodeTokenUserID(userdata.UserID, userdata.DeviceID, tokenAuth)
+	require.NoError(t, err)
 
-	_, tokenNoDeviceIDString, err := tokenAuth.Encode(map[string]interface{}{
-		"user_id": userdata.UserID,
-	})
+	tokenNoUserIDString, err := auth.Auth{}.EncodeTokenUserID(uuid.Nil, userdata.DeviceID, tokenAuth)
+	require.NoError(t, err)
 
+	tokenNoDeviceIDString, err := auth.Auth{}.EncodeTokenUserID(userdata.UserID, uuid.Nil, tokenAuth)
 	require.NoError(t, err)
 
 	//  middleware reads Authorization header or jwt cookie to context
@@ -100,7 +95,7 @@ func TestMiddlewareAuth(t *testing.T) {
 			middlewareFunc: []Middleware{MiddlewareAuth, jwtMiddleware},
 			nextHandler:    toBodyHandler,
 			method:         http.MethodPost,
-			headers:        map[string]string{"Authorization": "Bearer " + tokenEmptyUserIDString},
+			headers:        map[string]string{"Authorization": "Bearer " + tokenNoUserIDString},
 
 			expectedCode: 401,
 		},

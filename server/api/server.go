@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/go-chi/jwtauth/v5"
 	"net/http"
 )
 
@@ -16,9 +17,9 @@ type Server struct {
 	cfg        *pkg.Config
 }
 
-func NewServer(cfg *pkg.Config, a auth.Authenticator, secret secret.SecretManager) (*Server, error) {
+func NewServer(cfg *pkg.Config, a auth.Authenticator, secret secret.SecretManager, jwtAuth *jwtauth.JWTAuth) (*Server, error) {
 
-	h, err := handler.NewHandler(a, secret)
+	h, err := handler.NewHandler(a, secret, jwtAuth)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка запуска server:%w", err)
 	}

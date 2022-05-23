@@ -19,15 +19,15 @@ const (
 
 //  Auth implements Authenticator interface methods for user authorisation.
 type Auth struct {
-	tokenAuth *jwtauth.JWTAuth
-	storage   storage.Storage
+	//tokenAuth *jwtauth.JWTAuth
+	storage storage.Storage
 }
 
 //  NewAuth init new Auth.
 func NewAuth(s storage.Storage) (*Auth, error) {
 	return &Auth{
-		tokenAuth: jwtauth.New("HS256", []byte("secret"), nil),
-		storage:   s,
+		//tokenAuth: jwtauth.New("HS256", []byte("secret"), nil),
+		storage: s,
 	}, nil
 }
 
@@ -74,8 +74,8 @@ func (a *Auth) Authenticate(ctx context.Context, login string, password string) 
 }
 
 //  EncodeTokenUserID encodes token with user_id claim.
-func (a *Auth) EncodeTokenUserID(userID uuid.UUID, deviceID uuid.UUID) (string, error) {
-	_, tokenString, err := a.tokenAuth.Encode(map[string]interface{}{
+func (a Auth) EncodeTokenUserID(userID uuid.UUID, deviceID uuid.UUID, tokenAuth *jwtauth.JWTAuth) (string, error) {
+	_, tokenString, err := tokenAuth.Encode(map[string]interface{}{
 		"user_id":   userID.String(),
 		"device_id": deviceID.String(),
 	})
@@ -84,9 +84,4 @@ func (a *Auth) EncodeTokenUserID(userID uuid.UUID, deviceID uuid.UUID) (string, 
 	}
 
 	return tokenString, nil
-}
-
-//  TokenAuth returns JWTAuth pointer
-func (a *Auth) TokenAuth() *jwtauth.JWTAuth {
-	return a.tokenAuth
 }
