@@ -1,7 +1,6 @@
 package http
 
 import (
-	"advdiploma/client/provider"
 	"advdiploma/client/provider/http/model"
 	"bytes"
 	"encoding/json"
@@ -11,20 +10,6 @@ import (
 	"log"
 	"net/http"
 )
-
-var _ provider.SecretProvider = (*HTTPProvider)(nil)
-
-type HTTPProvider struct {
-	client *TokenClient
-	cfg    HTTPConfig
-}
-
-func NewHTTPProvider(cfg HTTPConfig) *HTTPProvider {
-	return &HTTPProvider{
-		client: NewTokenClient(cfg.timeout),
-		cfg:    cfg,
-	}
-}
 
 func (p *HTTPProvider) Authorise(login string, pass string, masterHash string, deviceID uuid.UUID) error {
 	return p.sendAuthorise(login, pass, masterHash, deviceID, p.cfg.BaseURL+p.cfg.AuthURL)
