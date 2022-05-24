@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"time"
 )
 
 type TokenClient struct {
@@ -14,10 +15,11 @@ type transport struct {
 	apiToken     *string
 }
 
-func NewTokenClient() *TokenClient {
+func NewTokenClient(timeout time.Duration) *TokenClient {
 	token := ""
 	return &TokenClient{
 		Client: http.Client{
+			Timeout: timeout,
 			Transport: &transport{
 				RoundTripper: http.DefaultTransport,
 				apiToken:     &token,

@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestTokenClient_SetToken(t *testing.T) {
-	client := NewTokenClient()
+	client := NewTokenClient(time.Second * 5)
 	testTokenClient(t, client, "")
 
 	token := fake.CharactersN(32)
