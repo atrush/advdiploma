@@ -1,5 +1,7 @@
 package model
 
+import "github.com/google/uuid"
+
 var (
 	SecretTypes = map[string]int{
 		"CARD":   1,
@@ -11,9 +13,12 @@ var (
 
 type Info struct {
 	ID          int64
+	StatusID    int
 	TypeID      int
 	Title       string
 	Description string
+	SecretID    uuid.UUID
+	SecretVer   int
 }
 
 type Informer interface {
@@ -25,7 +30,7 @@ type Informer interface {
 //Expiration date
 //Service code (You won’t find this data on the card itself. It lives within the magnetic stripe
 type Card struct {
-	Info            Info   `json:"-"`
+	Info            `json:"-"`
 	CardholderName  string `json:"cardholder"`
 	PAN             string `json:"pan"`
 	ExpirationMonth int    `json:"expiration_month"`
@@ -40,7 +45,7 @@ func (c *Card) GetInfo() Info {
 var _ Informer = (*Card)(nil)
 
 type Auth struct {
-	Info     Info   `json:"-"`
+	Info     `json:"-"`
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
@@ -50,7 +55,7 @@ func (a *Auth) GetInfo() Info {
 }
 
 type Binary struct {
-	Info        Info `json:"-"`
+	Info        `json:"-"`
 	Data        []byte
 	ContentType string
 	Filename    string
@@ -61,6 +66,7 @@ func (b *Binary) GetInfo() Info {
 }
 
 type Secret struct {
-	Info Info
-	Data string
+	Info
+
+	SecretData string
 }
