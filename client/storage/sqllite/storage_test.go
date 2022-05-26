@@ -6,37 +6,101 @@ import (
 	"github.com/icrowley/fake"
 )
 
-//var (
-//	testSecret = model.Secret{
-//		Info: model.Info{
-//			TypeID:      model.SecretTypes["CARD"],
-//			Title:       "Tinkoff Bank",
-//			Description: "Tinka",
-//			SecretID:    uuid.New(),
-//			SecretVer:   1,
-//			StatusID:    3,
-//		},
-//		SecretData: "T68WwfT8Kr1F3k21KBO8t1AqsALMW6A3xMt3BNKhKQWTOKtrRNKldTalvXt307jqax/C+Uag5so4PWlFVAeS6kM9jznhVSMR6n6in836UluABAtlxbZnCJX/i+WBIRhh4VVxjw3SaWo05/od5gYw5lzTgK8WNGMlbDPow==",
-//	}
-//)
+func (s *TestSuite) TestStorage_UpdateSecretBySecretID() {
+	s.Run("Update exist", func() {
 
-func getMockSecret() model.Secret {
-	return model.Secret{
-		Info: model.Info{
-			TypeID:      model.SecretTypes["CARD"],
-			Title:       fake.Company(),
-			Description: fake.CharactersN(200),
-			SecretID:    uuid.New(),
-			SecretVer:   1,
-			StatusID:    3,
-		},
-		SecretData: fake.CharactersN(2000),
-	}
+		secret1 := getMockSecret()
+
+		id, err := s.storage.AddSecret(secret1)
+		s.Require().NoError(err)
+
+		secret1.ID = id
+
+		//  mock updated secret
+		secret2 := getMockSecret()
+		secret2.ID = id
+		secret2.SecretID = secret1.SecretID
+
+		err = s.storage.UpdateSecretBySecretID(secret2)
+		s.Require().NoError(err)
+
+		dbRes, err := s.storage.GetSecret(id)
+		s.Require().NoError(err)
+
+		s.Assert().EqualValues(dbRes.ID, secret2.ID)
+		s.Assert().EqualValues(dbRes.TypeID, secret2.TypeID)
+		s.Assert().EqualValues(dbRes.Title, secret2.Title)
+		s.Assert().EqualValues(dbRes.Description, secret2.Description)
+		s.Assert().EqualValues(dbRes.SecretID, secret2.SecretID)
+		s.Assert().EqualValues(dbRes.SecretVer, secret2.SecretVer)
+		s.Assert().EqualValues(dbRes.StatusID, secret2.StatusID)
+
+	})
+
+	s.dropSecretsTable()
+
+	s.Run("Update not exist", func() {
+		secret1 := getMockSecret()
+		secret1.ID = 201
+
+		err := s.storage.UpdateSecretBySecretID(secret1)
+		s.Require().Error(err)
+	})
+
+	s.dropSecretsTable()
+
+	s.Run("Update secretID nil", func() {
+		secret1 := getMockSecret()
+		secret1.ID = 201
+		secret1.SecretID = uuid.Nil
+
+		err := s.storage.UpdateSecretBySecretID(secret1)
+		s.Require().Error(err)
+	})
+
+	s.dropSecretsTable()
 }
 
-func (s *TestSuite) DropSecretsTable() {
-	_, err := s.storage.db.Exec("DELETE FROM Secrets")
-	s.Require().NoError(err)
+func (s *TestSuite) TestStorage_UpdateSecretByID() {
+	s.Run("Update exist", func() {
+
+		secret1 := getMockSecret()
+
+		id, err := s.storage.AddSecret(secret1)
+		s.Require().NoError(err)
+
+		secret1.ID = id
+
+		secret2 := getMockSecret()
+		secret2.ID = id
+
+		err = s.storage.UpdateSecretByID(secret2)
+		s.Require().NoError(err)
+
+		dbRes, err := s.storage.GetSecret(id)
+		s.Require().NoError(err)
+
+		s.Assert().EqualValues(dbRes.ID, secret2.ID)
+		s.Assert().EqualValues(dbRes.TypeID, secret2.TypeID)
+		s.Assert().EqualValues(dbRes.Title, secret2.Title)
+		s.Assert().EqualValues(dbRes.Description, secret2.Description)
+		s.Assert().EqualValues(dbRes.SecretID, secret2.SecretID)
+		s.Assert().EqualValues(dbRes.SecretVer, secret2.SecretVer)
+		s.Assert().EqualValues(dbRes.StatusID, secret2.StatusID)
+
+	})
+
+	s.dropSecretsTable()
+
+	s.Run("Update not exist", func() {
+		secret1 := getMockSecret()
+		secret1.ID = 201
+
+		err := s.storage.UpdateSecretByID(secret1)
+		s.Require().Error(err)
+	})
+
+	s.dropSecretsTable()
 }
 
 func (s *TestSuite) TestStorage_GetInfoList() {
@@ -69,7 +133,7 @@ func (s *TestSuite) TestStorage_GetInfoList() {
 		}
 	})
 
-	s.DropSecretsTable()
+	s.dropSecretsTable()
 }
 
 func (s *TestSuite) TestStorage_Add_Get() {
@@ -90,5 +154,24 @@ func (s *TestSuite) TestStorage_Add_Get() {
 		s.Assert().EqualValues(testSecret.SecretData, dbSecret.SecretData)
 	})
 
-	s.DropSecretsTable()
+	s.dropSecretsTable()
+}
+
+func (s *TestSuite) dropSecretsTable() {
+	_, err := s.storage.db.Exec("DELETE FROM Secrets")
+	s.Require().NoError(err)
+}
+
+func getMockSecret() model.Secret {
+	return model.Secret{
+		Info: model.Info{
+			TypeID:      model.SecretTypes["CARD"],
+			Title:       fake.Company(),
+			Description: fake.CharactersN(200),
+			SecretID:    uuid.New(),
+			SecretVer:   1,
+			StatusID:    3,
+		},
+		SecretData: fake.CharactersN(2000),
+	}
 }

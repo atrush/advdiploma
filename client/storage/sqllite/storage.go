@@ -4,6 +4,8 @@ import (
 	"advdiploma/client/model"
 	"advdiploma/client/storage"
 	"database/sql"
+	"fmt"
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 )
@@ -57,6 +59,57 @@ func (s *Storage) AddSecret(v model.Secret) (int64, error) {
 	}
 
 	return id, nil
+}
+
+//  UpdateSecret adds new secret to storage
+func (s *Storage) UpdateSecretByID(v model.Secret) error {
+	query := `
+		UPDATE secrets
+		SET status_id = ?, type_id = ?, title=?, description=?, secret_id=?, secret_ver=?, secret_data=?
+		WHERE id = ?;
+`
+
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	res, err := stmt.Exec(v.StatusID, v.TypeID, v.Title, v.Description, v.SecretID, v.SecretVer, v.SecretData, v.ID)
+	if err != nil {
+		return err
+	}
+
+	exists, err := res.RowsAffected()
+
+	if exists == 0 {
+		return fmt.Errorf("item not found")
+	}
+
+	return nil
+}
+
+//  UpdateSecret adds new secret to storage
+func (s *Storage) UpdateSecretBySecretID(v model.Secret) error {
+	if v.SecretID == uuid.Nil {
+		return fmt.Errorf("secret id must be not nil")
+	}
+	query := `
+		UPDATE secrets
+		SET status_id = ?, type_id = ?, title=?, description=?, secret_ver=?, secret_data=?
+		WHERE secret_id = ?;
+`
+
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(v.StatusID, v.TypeID, v.Title, v.Description, v.SecretVer, v.SecretData, v.SecretID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 //  GetSecret returns secret from storage
