@@ -119,7 +119,7 @@ func (s *TestSuite) TestStorage_GetInfoList() {
 			arrSecrets[i] = secret
 		}
 
-		infoArr, err := s.storage.GetInfoList()
+		infoArr, err := s.storage.GetMetaList()
 		s.Require().NoError(err)
 
 		for i, el := range infoArr {
@@ -168,10 +168,10 @@ func getMockSecret() model.Secret {
 			TypeID:      model.SecretTypes["CARD"],
 			Title:       fake.Company(),
 			Description: fake.CharactersN(200),
-			SecretID:    uuid.New(),
-			SecretVer:   1,
-			StatusID:    3,
 		},
+		SecretID:   uuid.New(),
+		SecretVer:  1,
+		StatusID:   3,
 		SecretData: fake.CharactersN(2000),
 	}
 }

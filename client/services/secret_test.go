@@ -3,30 +3,63 @@ package services
 import (
 	"advdiploma/client/model"
 	"advdiploma/client/pkg"
+	"advdiploma/client/storage"
+	mk "advdiploma/client/storage/mock"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func GetTestSecretSvc() *SecretService {
+func GetTestSecretSvc(t *testing.T, storage storage.Storage) *SecretService {
 	cfg := &pkg.Config{
 		MasterKey: "testKey",
 	}
 
-	svcSecret := NewSecret(cfg)
+	svcSecret := NewSecret(cfg, storage)
 	return &svcSecret
 }
 
 func TestCard_ToSecret(t *testing.T) {
-	secretSvc := GetTestSecretSvc()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	secret, err := secretSvc.ToSecret(model.TestCard.Info, model.TestCard)
-	require.NoError(t, err)
+	tests := []struct {
+		name    string
+		obj     interface{}
+		storage storage.Storage
+		reqErr  assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "card",
+			obj:     model.TestCard,
+			storage: storageEmpty(ctrl),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	resObj, err := secretSvc.ReadFromSecret(secret)
-	require.NoError(t, err)
+			secretSvc := GetTestSecretSvc(t, tt.storage)
 
-	resCard, ok := resObj.(model.Card)
-	require.True(t, ok)
+			secret, err := secretSvc.ToSecret(tt.obj)
+			require.NoError(t, err)
 
-	require.Equal(t, resCard, model.TestCard)
+			resObj, err := secretSvc.ReadFromSecret(secret)
+			require.NoError(t, err)
+
+			switch resObj.(type) {
+			case model.Card:
+				require.Equal(t, resObj.(model.Card), tt.obj)
+
+			default:
+				t.Error("wrong type")
+			}
+
+		})
+	}
+}
+
+func storageEmpty(ctrl *gomock.Controller) *mk.MockStorage {
+	storageMock := mk.NewMockStorage(ctrl)
+	return storageMock
 }

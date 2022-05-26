@@ -104,9 +104,15 @@ func (s *Storage) UpdateSecretBySecretID(v model.Secret) error {
 		return err
 	}
 
-	_, err = stmt.Exec(v.StatusID, v.TypeID, v.Title, v.Description, v.SecretVer, v.SecretData, v.SecretID)
+	res, err := stmt.Exec(v.StatusID, v.TypeID, v.Title, v.Description, v.SecretVer, v.SecretData, v.SecretID)
 	if err != nil {
 		return err
+	}
+
+	exists, err := res.RowsAffected()
+
+	if exists == 0 {
+		return fmt.Errorf("item not found")
 	}
 
 	return nil
@@ -119,7 +125,7 @@ func (s *Storage) GetSecret(id int64) (model.Secret, error) {
 		"SELECT id, status_id, type_id, title, description, secret_id, secret_ver, secret_data FROM secrets WHERE id=@id",
 		sql.Named("id", id),
 	).Scan(
-		&res.Info.ID,
+		&res.ID,
 		&res.StatusID,
 		&res.TypeID,
 		&res.Title,
@@ -133,8 +139,8 @@ func (s *Storage) GetSecret(id int64) (model.Secret, error) {
 }
 
 //  GetInfoForUser returns array of info secrets
-func (s *Storage) GetInfoList() ([]model.Info, error) {
-	var infos []model.Info
+func (s *Storage) GetMetaList() ([]model.Secret, error) {
+	var list []model.Secret
 
 	rows, err := s.db.Query(
 		"SELECT id, status_id, type_id, title, description, secret_id, secret_ver FROM secrets")
@@ -149,24 +155,24 @@ func (s *Storage) GetInfoList() ([]model.Info, error) {
 	}()
 
 	for rows.Next() {
-		var el model.Info
+		var el model.Secret
 		err = rows.Scan(&el.ID, &el.StatusID, &el.TypeID, &el.Title, &el.Description, &el.SecretID, &el.SecretVer)
 		if err != nil {
 			return nil, err
 		}
 
-		infos = append(infos, el)
+		list = append(list, el)
 	}
 
 	if rows.Err() != nil {
 		return nil, rows.Err()
 	}
 
-	if len(infos) == 0 {
-		infos = make([]model.Info, 0)
+	if len(list) == 0 {
+		list = make([]model.Secret, 0)
 	}
 
-	return infos, nil
+	return list, nil
 }
 
 //  Close  closes database connection.

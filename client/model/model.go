@@ -9,16 +9,18 @@ var (
 		"TEXT":   3,
 		"BINARY": 4,
 	}
+
+	SecretStatuses = map[string]int{
+		"NEW":      1,
+		"UPLOAD":   2,
+		"DOWNLOAD": 3,
+	}
 )
 
 type Info struct {
-	ID          int64
-	StatusID    int
-	TypeID      int
-	Title       string
-	Description string
-	SecretID    uuid.UUID
-	SecretVer   int
+	TypeID      int    `json:"type_id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
 }
 
 type Informer interface {
@@ -30,7 +32,7 @@ type Informer interface {
 //Expiration date
 //Service code (You won’t find this data on the card itself. It lives within the magnetic stripe
 type Card struct {
-	Info            `json:"-"`
+	Info
 	CardholderName  string `json:"cardholder"`
 	PAN             string `json:"pan"`
 	ExpirationMonth int    `json:"expiration_month"`
@@ -45,7 +47,7 @@ func (c *Card) GetInfo() Info {
 var _ Informer = (*Card)(nil)
 
 type Auth struct {
-	Info     `json:"-"`
+	Info
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
@@ -55,18 +57,19 @@ func (a *Auth) GetInfo() Info {
 }
 
 type Binary struct {
-	Info        `json:"-"`
+	Info
 	Data        []byte
 	ContentType string
 	Filename    string
 }
 
-func (b *Binary) GetInfo() Info {
-	return b.Info
-}
-
 type Secret struct {
 	Info
+
+	ID        int64
+	SecretID  uuid.UUID
+	SecretVer int
+	StatusID  int
 
 	SecretData string
 }
