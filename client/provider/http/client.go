@@ -7,7 +7,8 @@ import (
 
 type TokenClient struct {
 	http.Client
-	apiToken *string
+	apiToken     *string
+	isAuthorised bool
 }
 
 type transport struct {
@@ -25,12 +26,14 @@ func NewTokenClient(timeout time.Duration) *TokenClient {
 				apiToken:     &token,
 			},
 		},
-		apiToken: &token,
+		apiToken:     &token,
+		isAuthorised: false,
 	}
 }
 
 func (c *TokenClient) SetToken(token string) {
 	*c.apiToken = token
+	c.isAuthorised = true
 }
 
 // RoundTrip Implements RoundTripper interface

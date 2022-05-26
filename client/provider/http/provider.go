@@ -13,7 +13,7 @@ type HTTPProvider struct {
 
 func NewHTTPProvider(cfg HTTPConfig) *HTTPProvider {
 	return &HTTPProvider{
-		client: NewTokenClient(cfg.timeout),
+		client: NewTokenClient(cfg.Timeout),
 		cfg:    cfg,
 	}
 }

@@ -7,5 +7,7 @@ type HTTPConfig struct {
 	AuthURL     string
 	RegisterURL string
 
-	timeout time.Duration
+	SecretURL string
+
+	Timeout time.Duration
 }

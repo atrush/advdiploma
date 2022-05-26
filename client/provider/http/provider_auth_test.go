@@ -36,7 +36,8 @@ var (
 	provBaseCfg = HTTPConfig{
 		AuthURL:     "/api/user/login",
 		RegisterURL: "/api/user/register",
-		timeout:     time.Millisecond * 200,
+		SecretURL:   "/api/secret",
+		Timeout:     time.Millisecond * 200,
 	}
 )
 
@@ -59,7 +60,7 @@ func TestProvider_Auth(t *testing.T) {
 		},
 		{
 			name:      "too long request",
-			serverCfg: authSrvConfig.New(withSleep(provBaseCfg.timeout + time.Millisecond*200)),
+			serverCfg: authSrvConfig.New(withSleep(provBaseCfg.Timeout + time.Millisecond*200)),
 			reqErr:    assert.Error,
 		},
 		{
@@ -128,7 +129,7 @@ func TestProvider_Register(t *testing.T) {
 		},
 		{
 			name:      "too long request",
-			serverCfg: regSrvConfig.New(withSleep(provBaseCfg.timeout + time.Millisecond*200)),
+			serverCfg: regSrvConfig.New(withSleep(provBaseCfg.Timeout + time.Millisecond*200)),
 			reqErr:    assert.Error,
 		},
 		{

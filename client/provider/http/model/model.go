@@ -8,3 +8,9 @@ type LoginRequest struct {
 	Password   string    `json:"password"`
 	DeviceID   uuid.UUID `json:"device_id"`
 }
+
+type SecretRequest struct {
+	Data string    `json:"data,omitempty"`
+	ID   uuid.UUID `json:"id"`
+	Ver  int       `json:"ver"`
+}
