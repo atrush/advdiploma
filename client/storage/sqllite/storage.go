@@ -62,7 +62,7 @@ func (s *Storage) AddSecret(v model.Secret) (int64, error) {
 }
 
 //  UpdateSecret adds new secret to storage
-func (s *Storage) UpdateSecretByID(v model.Secret) error {
+func (s *Storage) UpdateSecret(v model.Secret) error {
 	query := `
 		UPDATE secrets
 		SET status_id = ?, type_id = ?, title=?, description=?, secret_id=?, secret_ver=?, secret_data=?
