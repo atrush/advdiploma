@@ -6,6 +6,7 @@ import (
 	"advdiploma/client/storage"
 	"encoding/json"
 	"errors"
+	"github.com/google/uuid"
 	"log"
 )
 
@@ -21,7 +22,21 @@ func NewSecret(cfg *pkg.Config, db storage.Storage) SecretService {
 	}
 }
 
-func (s *SecretService) NewSecret(secret model.Secret) (int64, error) {
+// new -> upload
+// update ->download
+// changed -> toupload, todownload - ask collision
+// delete -> if new, delete if actual mark to delete -  post delete, deleted+ver
+
+func (s *SecretService) AddSecret(obj interface{}) (int64, error) {
+	secret, err := s.ToSecret(obj)
+	if err != nil {
+		return 0, err
+	}
+
+	secret.StatusID = model.SecretStatuses["NEW"]
+	secret.SecretID = uuid.Nil
+	secret.SecretVer = 0
+
 	id, err := s.db.AddSecret(secret)
 
 	if err != nil {
@@ -29,6 +44,45 @@ func (s *SecretService) NewSecret(secret model.Secret) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func (s *SecretService) UpdateSecret(id int64, obj interface{}) error {
+	secret, err := s.ToSecret(obj)
+	if err != nil {
+		return err
+	}
+
+	dbSecret, err := s.db.GetSecret(id)
+	if err != nil {
+		return err
+	}
+
+	dbSecret.Info = secret.Info
+	dbSecret.SecretData = secret.SecretData
+	dbSecret.StatusID = model.SecretStatuses["UPDATED"]
+
+	err = s.db.UpdateSecret(dbSecret)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *SecretService) DeleteSecret(id int64) error {
+	dbSecret, err := s.db.GetSecret(id)
+	if err != nil {
+		return err
+	}
+
+	dbSecret.StatusID = model.SecretStatuses["DELETED"]
+
+	err = s.db.UpdateSecret(dbSecret)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *SecretService) ToSecret(i interface{}) (model.Secret, error) {
@@ -84,6 +138,22 @@ func (s *SecretService) ToSecret(i interface{}) (model.Secret, error) {
 		Info:       info,
 		SecretData: encrypted,
 	}, nil
+}
+
+func (s *SecretService) ReadInfoFromSecret(enc string) (model.Info, error) {
+	decData, err := pkg.Decode(enc, s.cfg.MasterKey)
+	if err != nil {
+		log.Fatal("error:", err)
+	}
+	var info model.Info
+
+	err = json.Unmarshal(decData, &info)
+
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return info, nil
 }
 
 func (s *SecretService) ReadFromSecret(el model.Secret) (interface{}, error) {

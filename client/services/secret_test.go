@@ -44,12 +44,18 @@ func TestCard_ToSecret(t *testing.T) {
 			secret, err := secretSvc.ToSecret(tt.obj)
 			require.NoError(t, err)
 
+			info, err := secretSvc.ReadInfoFromSecret(secret.SecretData)
+			require.NoError(t, err)
+
 			resObj, err := secretSvc.ReadFromSecret(secret)
 			require.NoError(t, err)
 
 			switch resObj.(type) {
 			case model.Card:
-				require.Equal(t, resObj.(model.Card), tt.obj)
+				srcCard := tt.obj.(model.Card)
+				resCard := resObj.(model.Card)
+				require.Equal(t, srcCard.Info, info)
+				require.Equal(t, tt.obj, resCard)
 
 			default:
 				t.Error("wrong type")
