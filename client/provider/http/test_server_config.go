@@ -10,6 +10,7 @@ type serverTestConfig struct {
 	returnBody    string
 	sleep         time.Duration
 
+	reqMethod  string
 	reqHeaders map[string]string
 	reqBody    string
 	reqURL     string
@@ -27,9 +28,11 @@ func (c *serverTestConfig) New(opts ...serverTestParam) serverTestConfig {
 	return res
 }
 
-func withReturnHeaders(v map[string]string) serverTestParam {
+func withReturnHeaders(add map[string]string) serverTestParam {
 	return func(h *serverTestConfig) {
-		h.returnHeaders = v
+		for k, v := range add {
+			h.returnHeaders[k] = v
+		}
 	}
 }
 
@@ -51,10 +54,13 @@ func withSleep(v time.Duration) serverTestParam {
 	}
 }
 
-func withReqHeaders(v map[string]string) serverTestParam {
+func withReqHeaders(add map[string]string) serverTestParam {
 	return func(h *serverTestConfig) {
-		h.reqHeaders = v
+		for k, v := range add {
+			h.reqHeaders[k] = v
+		}
 	}
+
 }
 
 func withReqURL(url string) serverTestParam {
@@ -63,8 +69,14 @@ func withReqURL(url string) serverTestParam {
 	}
 }
 
-func withReqBody(url string) serverTestParam {
+func withReqBody(body string) serverTestParam {
 	return func(h *serverTestConfig) {
-		h.reqURL = url
+		h.reqBody = body
+	}
+}
+
+func withReqMethod(method string) serverTestParam {
+	return func(h *serverTestConfig) {
+		h.reqMethod = method
 	}
 }

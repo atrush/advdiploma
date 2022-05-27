@@ -16,16 +16,19 @@ import (
 func getTestHTTPServer(t *testing.T, cfg serverTestConfig) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(
 		func(rw http.ResponseWriter, req *http.Request) {
+			if len(cfg.reqMethod) > 0 {
+				assert.EqualValues(t, cfg.reqMethod, req.Method)
+			}
 
 			if len(cfg.reqURL) > 0 {
-				assert.EqualValues(t, req.URL.Path, cfg.reqURL)
+				assert.EqualValues(t, cfg.reqURL, req.URL.Path)
 			}
 
 			//  check headers
 			if len(cfg.reqHeaders) > 0 {
 				for key, val := range cfg.reqHeaders {
 					h := req.Header.Get(key)
-					assert.EqualValues(t, h, val)
+					assert.EqualValues(t, val, h)
 				}
 			}
 
@@ -39,7 +42,7 @@ func getTestHTTPServer(t *testing.T, cfg serverTestConfig) *httptest.Server {
 				}
 			}()
 
-			assert.EqualValues(t, string(body), cfg.reqBody)
+			assert.EqualValues(t, cfg.reqBody, string(body))
 
 			//  return params
 			if len(cfg.returnHeaders) > 0 {

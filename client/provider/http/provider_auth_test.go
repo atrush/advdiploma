@@ -1,48 +1,20 @@
 package http
 
 import (
-	"advdiploma/client/provider/http/model"
-	"encoding/json"
-	"github.com/google/uuid"
-	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log"
 	"net/http"
 	"testing"
 	"time"
 )
 
-var (
-	token = fake.CharactersN(16)
-
-	authData = model.LoginRequest{
-		Login:      fake.CharactersN(8),
-		Password:   fake.CharactersN(8),
-		MasterHash: fake.CharactersN(16),
-		DeviceID:   uuid.New(),
-	}
-
-	srvBaseCfg = serverTestConfig{
-		returnHeaders: map[string]string{"Authorization": token},
-		returnBody:    "",
-		returnStatus:  http.StatusOK,
-		sleep:         0,
-
-		reqHeaders: map[string]string{"content-type": "application/json"},
-		reqBody:    mustMarshalLoginRequest(authData),
-	}
-
-	provBaseCfg = HTTPConfig{
-		AuthURL:     "/api/user/login",
-		RegisterURL: "/api/user/register",
-		SecretURL:   "/api/secret",
-		Timeout:     time.Millisecond * 200,
-	}
-)
-
 func TestProvider_Auth(t *testing.T) {
-	authSrvConfig := srvBaseCfg.New(withReqURL(provBaseCfg.AuthURL))
+	authSrvConfig := srvBaseCfg.New(
+		withReturnHeaders(map[string]string{"Authorization": token}),
+		withReqMethod(http.MethodPost),
+		withReqBody(mustMarshalLoginRequest(authData)),
+		withReqURL(provBaseCfg.AuthURL),
+	)
 
 	tests := []struct {
 		name      string
@@ -111,7 +83,12 @@ func TestProvider_Auth(t *testing.T) {
 }
 
 func TestProvider_Register(t *testing.T) {
-	regSrvConfig := srvBaseCfg.New(withReqURL(provBaseCfg.RegisterURL))
+	regSrvConfig := srvBaseCfg.New(
+		withReturnHeaders(map[string]string{"Authorization": token}),
+		withReqMethod(http.MethodPost),
+		withReqBody(mustMarshalLoginRequest(authData)),
+		withReqURL(provBaseCfg.RegisterURL),
+	)
 
 	tests := []struct {
 		name      string
@@ -177,12 +154,4 @@ func TestProvider_Register(t *testing.T) {
 			require.EqualValues(t, *provider.client.apiToken, tt.reqToken)
 		})
 	}
-}
-
-func mustMarshalLoginRequest(val model.LoginRequest) string {
-	res, err := json.Marshal(val)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return string(res)
 }

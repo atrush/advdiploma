@@ -14,3 +14,7 @@ type SecretRequest struct {
 	ID   uuid.UUID `json:"id"`
 	Ver  int       `json:"ver"`
 }
+
+type SyncResponse struct {
+	List map[uuid.UUID]int `json:"list"`
+}

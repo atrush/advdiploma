@@ -6,6 +6,7 @@ type HTTPConfig struct {
 	BaseURL     string
 	AuthURL     string
 	RegisterURL string
+	SyncListURL string
 
 	SecretURL string
 
