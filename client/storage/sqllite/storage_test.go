@@ -74,7 +74,7 @@ func (s *TestSuite) TestStorage_UpdateSecretByID() {
 		secret2 := getMockSecret()
 		secret2.ID = id
 
-		err = s.storage.UpdateSecretByID(secret2)
+		err = s.storage.UpdateSecret(secret2)
 		s.Require().NoError(err)
 
 		dbRes, err := s.storage.GetSecret(id)
@@ -96,7 +96,7 @@ func (s *TestSuite) TestStorage_UpdateSecretByID() {
 		secret1 := getMockSecret()
 		secret1.ID = 201
 
-		err := s.storage.UpdateSecretByID(secret1)
+		err := s.storage.UpdateSecret(secret1)
 		s.Require().Error(err)
 	})
 
