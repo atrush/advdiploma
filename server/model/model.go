@@ -3,7 +3,6 @@ package model
 import (
 	"errors"
 	"github.com/google/uuid"
-	"time"
 )
 
 type (
@@ -16,13 +15,10 @@ type (
 
 	Secret struct {
 		ID        uuid.UUID
+		Ver       int
 		UserID    uuid.UUID
-		DeviceID  uuid.UUID
 		Data      string
 		IsDeleted bool
-
-		UploadedAt time.Time
-		DeletedAt  time.Time
 	}
 )
 

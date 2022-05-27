@@ -60,7 +60,7 @@ func (c *Config) Validate() error {
 func (c *Config) readFlagConfig() {
 	flagConfig := &Config{}
 
-	flag.StringVar(&flagConfig.ServerPort, "a", defServerPort, "port for HTTP-server <:port>")
+	flag.StringVar(&flagConfig.ServerPort, "p", defServerPort, "port for HTTP-server <:port>")
 	flag.StringVar(&flagConfig.DatabaseDSN, "d", defDatabaseDSN, "database connection string")
 	flag.BoolVar(&flagConfig.EnableHTTPS, "https", defEnableHTTPS, "enable https")
 

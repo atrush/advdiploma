@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/google/uuid"
+	"log"
 )
 
 var _ storage.SecretRepository = (*secretRepository)(nil)
@@ -22,51 +23,75 @@ func newSecretRepository(db *sql.DB) *secretRepository {
 	}
 }
 
-func (s *secretRepository) Add(ctx context.Context, secret model.Secret) (model.Secret, error) {
-	err := s.db.QueryRowContext(
+func (r *secretRepository) Add(ctx context.Context, secret model.Secret) (uuid.UUID, error) {
+	err := r.db.QueryRowContext(
 		ctx,
-		"INSERT INTO secrets(user_id,device_id,data) VALUES($1,$2,$3) "+
-			"RETURNING id, user_id, device_id, is_deleted ,data, created_at,deleted_at",
+		"INSERT INTO secrets(ver,user_id,data,is_deleted) VALUES($1,$2,$3,$4) "+
+			"RETURNING id",
+		secret.Ver,
 		secret.UserID,
-		secret.DeviceID,
 		secret.Data,
+		secret.IsDeleted,
 	).Scan(
 		&secret.ID,
-		&secret.UserID,
-		&secret.DeviceID,
-		&secret.IsDeleted,
-		&secret.Data,
-		&secret.UploadedAt,
-		&secret.DeletedAt,
 	)
 
 	if err != nil {
-		////  if exist return ErrorConflictSaveUser
-		//pqErr, ok := err.(*pq.Error)
-		//if ok && pqErr.Code == pgerrcode.UniqueViolation && pqErr.Constraint == "users_login_key" {
-		//	return model.User{}, model.ErrorConflictSaveUser
-		//}
-		return model.Secret{}, err
+		return uuid.Nil, err
 	}
 
-	return secret, nil
+	return secret.ID, nil
 }
 
-func (s *secretRepository) Get(ctx context.Context, id uuid.UUID) (model.Secret, error) {
+func (r *secretRepository) Get(ctx context.Context, id uuid.UUID) (model.Secret, error) {
 	res := model.Secret{}
-	if err := s.db.QueryRowContext(ctx,
-		"SELECT id, user_id,device_id,is_deleted,data, created_at,deleted_at FROM secrets WHERE id=$1",
+	if err := r.db.QueryRowContext(ctx,
+		"SELECT id, ver,user_id,data,is_deleted FROM secrets WHERE id=$1",
 		id,
 	).Scan(
 		&res.ID,
+		&res.Ver,
 		&res.UserID,
-		&res.DeviceID,
-		&res.IsDeleted,
 		&res.Data,
-		&res.UploadedAt,
-		&res.DeletedAt,
+		&res.IsDeleted,
 	); err != nil {
 		return model.Secret{}, err
+	}
+
+	return res, nil
+}
+
+func (r *secretRepository) GetUserVersionList(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]int, error) {
+	rows, err := r.db.QueryContext(
+		ctx,
+		"SELECT id, ver from secrets WHERE user_id = $1 AND is_deleted = $2", userID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	res := make(map[uuid.UUID]int)
+
+	for rows.Next() {
+		var key uuid.UUID
+		var val int
+
+		err = rows.Scan(&key, &val)
+		if err != nil {
+			return nil, err
+		}
+
+		res[key] = val
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
 	}
 
 	return res, nil
