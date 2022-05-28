@@ -2,13 +2,11 @@ package handler
 
 import (
 	apimiddleware "advdiploma/server/api/middleware"
-	"advdiploma/server/api/model"
 	"advdiploma/server/services/auth"
 	"advdiploma/server/services/secret"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
-	"net/http"
 )
 
 type Handler struct {
@@ -43,18 +41,14 @@ func GetRouter(handler *Handler) *chi.Mux {
 		r.Use(jwtauth.Verifier(tokenAuth))
 		r.Use(apimiddleware.MiddlewareAuth)
 
+		r.Put("/api/sync", handler.SyncList)
+
 		// Secret processing
-		r.Put("/api/secret", handler.SecretAdd)
-		//r.Get("/api/secret", handler.OrderGetListForUser)
-		//r.Delete("/api/secret", handler.OrderAddToUser)
+		r.Put("/api/secret", handler.SecretUpload)
+		r.Get("/api/secret", handler.SecretGet)
+		r.Delete("/api/secret", handler.SecretDelete)
 
 	})
 
 	return r
-}
-
-func (h *Handler) GetUserDataFromContext(r *http.Request) model.UserContextData {
-	ctxData := r.Context().Value(model.ContextKeyUserID).(model.UserContextData)
-
-	return ctxData
 }

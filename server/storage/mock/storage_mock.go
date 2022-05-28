@@ -142,10 +142,10 @@ func (m *MockSecretRepository) EXPECT() *MockSecretRepositoryMockRecorder {
 }
 
 // Add mocks base method.
-func (m *MockSecretRepository) Add(ctx context.Context, secret model.Secret) (model.Secret, error) {
+func (m *MockSecretRepository) Add(ctx context.Context, secret model.Secret) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Add", ctx, secret)
-	ret0, _ := ret[0].(model.Secret)
+	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -156,17 +156,60 @@ func (mr *MockSecretRepositoryMockRecorder) Add(ctx, secret interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockSecretRepository)(nil).Add), ctx, secret)
 }
 
-// Get mocks base method.
-func (m *MockSecretRepository) Get(ctx context.Context, id uuid.UUID) (model.Secret, error) {
+// Delete mocks base method.
+func (m *MockSecretRepository) Delete(ctx context.Context, id, userID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, id)
+	ret := m.ctrl.Call(m, "Delete", ctx, id, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockSecretRepositoryMockRecorder) Delete(ctx, id, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSecretRepository)(nil).Delete), ctx, id, userID)
+}
+
+// Get mocks base method.
+func (m *MockSecretRepository) Get(ctx context.Context, id, userID uuid.UUID) (model.Secret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", ctx, id, userID)
 	ret0, _ := ret[0].(model.Secret)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockSecretRepositoryMockRecorder) Get(ctx, id interface{}) *gomock.Call {
+func (mr *MockSecretRepositoryMockRecorder) Get(ctx, id, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockSecretRepository)(nil).Get), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockSecretRepository)(nil).Get), ctx, id, userID)
+}
+
+// GetUserVersionList mocks base method.
+func (m *MockSecretRepository) GetUserVersionList(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserVersionList", ctx, userID)
+	ret0, _ := ret[0].(map[uuid.UUID]int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserVersionList indicates an expected call of GetUserVersionList.
+func (mr *MockSecretRepositoryMockRecorder) GetUserVersionList(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserVersionList", reflect.TypeOf((*MockSecretRepository)(nil).GetUserVersionList), ctx, userID)
+}
+
+// Update mocks base method.
+func (m *MockSecretRepository) Update(ctx context.Context, secret model.Secret) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", ctx, secret)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockSecretRepositoryMockRecorder) Update(ctx, secret interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSecretRepository)(nil).Update), ctx, secret)
 }

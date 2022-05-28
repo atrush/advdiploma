@@ -43,11 +43,11 @@ func (r *secretRepository) Add(ctx context.Context, secret model.Secret) (uuid.U
 	return secret.ID, nil
 }
 
-func (r *secretRepository) Get(ctx context.Context, id uuid.UUID) (model.Secret, error) {
+func (r *secretRepository) Get(ctx context.Context, id uuid.UUID, userID uuid.UUID) (model.Secret, error) {
 	res := model.Secret{}
 	if err := r.db.QueryRowContext(ctx,
-		"SELECT id, ver,user_id,data,is_deleted FROM secrets WHERE id=$1",
-		id,
+		"SELECT id, ver,user_id,data,is_deleted FROM secrets WHERE id=$1 AND user_id=$2",
+		id, userID,
 	).Scan(
 		&res.ID,
 		&res.Ver,
@@ -59,6 +59,56 @@ func (r *secretRepository) Get(ctx context.Context, id uuid.UUID) (model.Secret,
 	}
 
 	return res, nil
+}
+
+func (r *secretRepository) Update(ctx context.Context, el model.Secret) error {
+	query := `
+		UPDATE secrets
+		SET ver = $2, ver = $3, user_id = $4, data=$5, is_deleted = $6
+		WHERE id = $1 AND user_id = $4;
+`
+
+	stmt, err := r.db.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	res, err := stmt.ExecContext(ctx, el.ID, el.Ver, el.UserID, el.Data, el.IsDeleted)
+	if err != nil {
+		return err
+	}
+
+	exists, err := res.RowsAffected()
+	if exists == 0 {
+		return model.ErrorItemNotFound
+	}
+
+	return nil
+}
+
+func (r *secretRepository) Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	query := `
+		UPDATE secrets
+		SET is_deleted = $3
+		WHERE id = $1 AND user_id = $2;
+`
+
+	stmt, err := r.db.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	res, err := stmt.ExecContext(ctx, id, userID, true)
+	if err != nil {
+		return err
+	}
+
+	exists, err := res.RowsAffected()
+	if exists == 0 {
+		return model.ErrorItemNotFound
+	}
+
+	return nil
 }
 
 func (r *secretRepository) GetUserVersionList(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]int, error) {

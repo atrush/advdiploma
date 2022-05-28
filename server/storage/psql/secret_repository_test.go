@@ -3,6 +3,7 @@ package psql
 import (
 	"advdiploma/server/model"
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	"github.com/icrowley/fake"
 	"math/rand"
@@ -14,6 +15,12 @@ var user = model.User{
 }
 
 func (s *TestSuite) TestSecret_AddGet() {
+	s.Run("Get not existed", func() {
+		_, err := s.storage.Secret().Get(s.ctx, uuid.New())
+		s.Require().Error(err)
+		s.Require().True(errors.Is(err, model.ErrorItemNotFound))
+	})
+
 	s.Run("Create and Get", func() {
 		user, err := s.storage.User().Create(s.ctx, user)
 
@@ -38,6 +45,7 @@ func (s *TestSuite) TestSecret_AddGet() {
 
 	s.dropTables()
 }
+
 func (s *TestSuite) TestStorage_GetUserVersionList() {
 	s.Run("Add list and get list of ver", func() {
 		user, err := s.storage.User().Create(s.ctx, user)

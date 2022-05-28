@@ -22,6 +22,9 @@ type UserRepository interface {
 
 type SecretRepository interface {
 	Add(ctx context.Context, secret model.Secret) (uuid.UUID, error)
-	Get(ctx context.Context, id uuid.UUID) (model.Secret, error)
+	Get(ctx context.Context, id uuid.UUID, userID uuid.UUID) (model.Secret, error)
+	Update(ctx context.Context, secret model.Secret) error
+	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+
 	GetUserVersionList(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]int, error)
 }

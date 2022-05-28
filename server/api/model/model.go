@@ -14,6 +14,11 @@ type (
 		Password   string    `json:"password"`
 		DeviceID   uuid.UUID `json:"device_id"`
 	}
+	SecretRequest struct {
+		Data string    `json:"data,omitempty"`
+		ID   uuid.UUID `json:"id,omitempty"`
+		Ver  int       `json:"ver,omitempty"`
+	}
 
 	UserContextData struct {
 		UserID   uuid.UUID

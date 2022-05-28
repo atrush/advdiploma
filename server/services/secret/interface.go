@@ -7,6 +7,7 @@ import (
 )
 
 type SecretManager interface {
-	Add(ctx context.Context, secret model.Secret) (model.Secret, error)
-	Get(ctx context.Context, id uuid.UUID) (model.Secret, error)
+	AddUpdate(ctx context.Context, secret model.Secret) (uuid.UUID, int, error)
+	Get(ctx context.Context, id uuid.UUID, userID uuid.UUID) (model.Secret, error)
+	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }
