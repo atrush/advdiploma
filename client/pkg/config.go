@@ -5,11 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
+	"time"
 )
 
 //  Config stores server config params.
 type Config struct {
-	MasterKey string `env:"MASTER_KEY"`
+	MasterKey   string `env:"MASTER_KEY"`
+	SyncTimeout time.Duration
 }
 
 //  Default config params.

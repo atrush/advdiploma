@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 )
 
 // MockStorage is a mock of Storage interface.
@@ -89,6 +90,21 @@ func (m *MockStorage) GetSecret(id int64) (model.Secret, error) {
 func (mr *MockStorageMockRecorder) GetSecret(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockStorage)(nil).GetSecret), id)
+}
+
+// GetSecretByExtID mocks base method.
+func (m *MockStorage) GetSecretByExtID(extID uuid.UUID) (model.Secret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSecretByExtID", extID)
+	ret0, _ := ret[0].(model.Secret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSecretByExtID indicates an expected call of GetSecretByExtID.
+func (mr *MockStorageMockRecorder) GetSecretByExtID(extID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecretByExtID", reflect.TypeOf((*MockStorage)(nil).GetSecretByExtID), extID)
 }
 
 // UpdateSecret mocks base method.

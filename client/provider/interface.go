@@ -9,6 +9,8 @@ type SecretProvider interface {
 	Register(login string, pass string, masterHash string, deviceID uuid.UUID) error
 
 	GetSyncList() (map[uuid.UUID]int, error)
-	//GetSecret(id uuid.UUID) (model.Secret, error)
-	//UploadSecret(secret model.Secret) (uuid.UUID, error)
+
+	UploadSecret(data string, id uuid.UUID, ver int) (uuid.UUID, int, error)
+	DownloadSecret(id uuid.UUID) (uuid.UUID, int, string, error)
+	DeleteSecret(id uuid.UUID) error
 }

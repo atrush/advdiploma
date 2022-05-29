@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 	"time"
 )
@@ -36,11 +37,29 @@ func (c *TokenClient) SetToken(token string) {
 	c.isAuthorised = true
 }
 
+func (c *TokenClient) DropAuth() {
+	*c.apiToken = ""
+	c.isAuthorised = false
+}
+
+func (c *TokenClient) DoWithAuth(req *http.Request) (*http.Response, error) {
+	if len(*c.apiToken) == 0 {
+		return nil, errors.New("client not authorized")
+	}
+
+	req.Header.Add("Authorization", *c.apiToken)
+
+	resp, err := c.Do(req)
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		c.DropAuth()
+	}
+
+	return resp, err
+}
+
 // RoundTrip Implements RoundTripper interface
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if len(*t.apiToken) > 0 {
-		req.Header.Add("Authorization", *t.apiToken)
-	}
 
 	return t.RoundTripper.RoundTrip(req)
 }

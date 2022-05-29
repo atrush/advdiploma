@@ -1,9 +1,11 @@
 package http
 
 import (
-	"advdiploma/client/provider/http/model"
+	"advdiploma/client/model"
+	prmodel "advdiploma/client/provider/http/model"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"io"
@@ -11,34 +13,90 @@ import (
 	"net/http"
 )
 
-func (p *HTTPProvider) Upload(data string, id uuid.UUID, ver int) (uuid.UUID, int, error) {
-	secretData, err := json.Marshal(model.SecretRequest{
+//  UploadSecret uploads secret to server, returns server id and version
+//  if id is nil, creates new
+func (p *HTTPProvider) UploadSecret(data string, id uuid.UUID, ver int) (uuid.UUID, int, error) {
+	reqData := prmodel.SecretRequest{
 		Data: data,
 		ID:   id,
 		Ver:  ver,
-	})
+	}
+	if !reqData.IsValidUpload() {
+		return uuid.Nil, 0, fmt.Errorf("%w : not valid upload param", model.ErrorParamNotValid)
+	}
+
+	resp := prmodel.SecretRequest{}
+	if err := p.processSecretRequest(reqData, http.MethodPut, &resp); err != nil {
+		return uuid.Nil, 0, fmt.Errorf("error secret upload: %w", err)
+	}
+
+	if !resp.IsValidResponseUpload() {
+		return uuid.Nil, 0, errors.New("upload response error: response not valid")
+	}
+
+	return resp.ID, resp.Ver, nil
+}
+
+//  DownloadSecret downloads secret from server
+func (p *HTTPProvider) DownloadSecret(id uuid.UUID) (uuid.UUID, int, string, error) {
+	reqData := prmodel.SecretRequest{
+		ID: id,
+	}
+	if !reqData.IsValidDownload() {
+		return uuid.Nil, 0, "", fmt.Errorf("%w : not valid download param", model.ErrorParamNotValid)
+	}
+
+	resp := prmodel.SecretRequest{}
+	if err := p.processSecretRequest(reqData, http.MethodGet, &resp); err != nil {
+		return uuid.Nil, 0, "", fmt.Errorf("error secret download: %w", err)
+	}
+
+	if !resp.IsValidResponseDownload() {
+		return uuid.Nil, 0, "", errors.New("download response error: response not valid")
+	}
+	return resp.ID, resp.Ver, resp.Data, nil
+}
+
+//  DeleteSecret deletes secret from server
+func (p *HTTPProvider) DeleteSecret(id uuid.UUID) error {
+	reqData := prmodel.SecretRequest{
+		ID: id,
+	}
+	if !reqData.IsValidDelete() {
+		return fmt.Errorf("%w : not valid delete param", model.ErrorParamNotValid)
+	}
+
+	resp := prmodel.SecretRequest{}
+	if err := p.processSecretRequest(reqData, http.MethodDelete, &resp); err != nil {
+		return fmt.Errorf("error secret delete: %w", err)
+	}
+	return nil
+}
+
+func (p *HTTPProvider) processSecretRequest(req prmodel.SecretRequest, method string, resp *prmodel.SecretRequest) error {
+	secretData, err := json.Marshal(req)
 	if err != nil {
-		return uuid.Nil, 0, fmt.Errorf("upload error: %w", err)
+		return fmt.Errorf("secret %v request error: %w", method, err)
 	}
 
 	//  prepare request
-	request, err := http.NewRequest(http.MethodPost, p.cfg.SecretURL, bytes.NewBuffer(secretData))
+	request, err := http.NewRequest(method, p.cfg.BaseURL+p.cfg.SecretURL, bytes.NewBuffer(secretData))
 	if err != nil {
-		return uuid.Nil, 0, fmt.Errorf("request error: %w", err)
+		return fmt.Errorf("secret %v request error: %w", method, err)
 	}
 
-	request.Header.Set("Content-Type", "Content-Type: text/plain")
+	request.Header.Set("content-type", "application/json")
 
 	//  do request
-	response, err := p.client.Do(request)
+	response, err := p.client.DoWithAuth(request)
 	if err != nil {
-		return uuid.Nil, 0, fmt.Errorf("request error: %w", err)
+		return fmt.Errorf("secret %v request error: %w", method, err)
 	}
 
 	//  read body
 	respBody, err := io.ReadAll(response.Body)
 	if err != nil {
-		return uuid.Nil, 0, fmt.Errorf("request error: %w", err)
+		return fmt.Errorf("secret %v response error: %w", method, err)
 	}
 
 	defer func() {
@@ -47,10 +105,16 @@ func (p *HTTPProvider) Upload(data string, id uuid.UUID, ver int) (uuid.UUID, in
 		}
 	}()
 
-	var respSecret model.SecretRequest
-	if err := json.Unmarshal(respBody, &respSecret); err != nil {
-		return uuid.Nil, 0, fmt.Errorf("request error: %w", err)
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("secret %s response error: %v - %s", method, response.StatusCode, string(respBody))
 	}
 
-	return respSecret.ID, respSecret.Ver, nil
+	//  if body not empty unmarshal
+	if len(respBody) > 0 {
+		if err := json.Unmarshal(respBody, resp); err != nil {
+			return fmt.Errorf("secret %v response error: %w", method, err)
+		}
+	}
+
+	return nil
 }

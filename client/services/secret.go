@@ -27,7 +27,21 @@ func NewSecret(cfg *pkg.Config, db storage.Storage) SecretService {
 // changed -> toupload, todownload - ask collision
 // delete -> if new, delete if actual mark to delete -  post delete, deleted+ver
 
-func (s *SecretService) AddSecret(obj interface{}) (int64, error) {
+func (s *SecretService) AddAuth(el model.Auth) (int64, error) {
+	return s.addSecret(el)
+}
+
+func (s *SecretService) AddCard(el model.Card) (int64, error) {
+	return s.addSecret(el)
+}
+
+func (s *SecretService) AddBinary(el model.Card) (int64, error) {
+	//todo read file
+
+	return s.addSecret(el)
+}
+
+func (s *SecretService) addSecret(obj interface{}) (int64, error) {
 	secret, err := s.ToSecret(obj)
 	if err != nil {
 		return 0, err
@@ -46,43 +60,49 @@ func (s *SecretService) AddSecret(obj interface{}) (int64, error) {
 	return id, nil
 }
 
-func (s *SecretService) UpdateSecret(id int64, obj interface{}) error {
-	secret, err := s.ToSecret(obj)
-	if err != nil {
-		return err
-	}
-
-	dbSecret, err := s.db.GetSecret(id)
-	if err != nil {
-		return err
-	}
-
-	dbSecret.Info = secret.Info
-	dbSecret.SecretData = secret.SecretData
-	dbSecret.StatusID = model.SecretStatuses["UPDATED"]
-
-	err = s.db.UpdateSecret(dbSecret)
-	if err != nil {
+//func (s *SecretService) UpdateSecret(id int64, obj interface{}) error {
+//	secret, err := s.ToSecret(obj)
+//	if err != nil {
+//		return err
+//	}
+//
+//	dbSecret, err := s.db.GetSecret(id)
+//	if err != nil {
+//		return err
+//	}
+//
+//	dbSecret.Info = secret.Info
+//	dbSecret.SecretData = secret.SecretData
+//	dbSecret.StatusID = model.SecretStatuses["UPDATED"]
+//
+//	err = s.db.UpdateSecret(dbSecret)
+//	if err != nil {
+//		return err
+//	}
+//
+//	return nil
+//}
+func (s *SecretService) UpdateSecret(secret model.Secret) error {
+	if err := s.db.UpdateSecret(secret); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *SecretService) DeleteSecret(id int64) error {
+func (s *SecretService) GetSecret(id int64) (model.Secret, error) {
 	dbSecret, err := s.db.GetSecret(id)
 	if err != nil {
-		return err
+		return model.Secret{}, err
 	}
-
-	dbSecret.StatusID = model.SecretStatuses["DELETED"]
-
-	err = s.db.UpdateSecret(dbSecret)
+	return dbSecret, nil
+}
+func (s *SecretService) GetSecretBySecretID(id uuid.UUID) (model.Secret, error) {
+	dbSecret, err := s.db.GetSecretByExtID(id)
 	if err != nil {
-		return err
+		return model.Secret{}, err
 	}
-
-	return nil
+	return dbSecret, nil
 }
 
 func (s *SecretService) ToSecret(i interface{}) (model.Secret, error) {
@@ -140,22 +160,6 @@ func (s *SecretService) ToSecret(i interface{}) (model.Secret, error) {
 	}, nil
 }
 
-func (s *SecretService) ReadInfoFromSecret(enc string) (model.Info, error) {
-	decData, err := pkg.Decode(enc, s.cfg.MasterKey)
-	if err != nil {
-		log.Fatal("error:", err)
-	}
-	var info model.Info
-
-	err = json.Unmarshal(decData, &info)
-
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	return info, nil
-}
-
 func (s *SecretService) ReadFromSecret(el model.Secret) (interface{}, error) {
 
 	decData, err := pkg.Decode(el.SecretData, s.cfg.MasterKey)
@@ -176,4 +180,32 @@ func (s *SecretService) ReadFromSecret(el model.Secret) (interface{}, error) {
 	}
 
 	return nil, errors.New("wrong TypeID")
+}
+
+func (s *SecretService) DeleteSecret(id int64) error {
+
+	dbSecret, err := s.db.GetSecret(id)
+	if err != nil {
+		//  if not found ok
+		if errors.Is(err, model.ErrorItemNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	//  if secret id is nil, not uploaded to server, just delete
+	//  if secret id not nil, but status send-delete, and delete was send, delete
+	if dbSecret.SecretID != uuid.Nil && dbSecret.StatusID != model.SecretStatuses["SEND_DELETE"] {
+		return errors.New("Can't delete not synch record")
+	}
+
+	if err := s.db.DeleteSecret(id); err != nil {
+		if errors.Is(err, model.ErrorItemNotFound) {
+			return nil
+		}
+
+		return err
+	}
+
+	return nil
 }

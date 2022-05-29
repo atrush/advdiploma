@@ -2,64 +2,10 @@ package sqllite
 
 import (
 	"advdiploma/client/model"
+	"errors"
 	"github.com/google/uuid"
 	"github.com/icrowley/fake"
 )
-
-func (s *TestSuite) TestStorage_UpdateSecretBySecretID() {
-	s.Run("Update exist", func() {
-
-		secret1 := getMockSecret()
-
-		id, err := s.storage.AddSecret(secret1)
-		s.Require().NoError(err)
-
-		secret1.ID = id
-
-		//  mock updated secret
-		secret2 := getMockSecret()
-		secret2.ID = id
-		secret2.SecretID = secret1.SecretID
-
-		err = s.storage.UpdateSecretBySecretID(secret2)
-		s.Require().NoError(err)
-
-		dbRes, err := s.storage.GetSecret(id)
-		s.Require().NoError(err)
-
-		s.Assert().EqualValues(dbRes.ID, secret2.ID)
-		s.Assert().EqualValues(dbRes.TypeID, secret2.TypeID)
-		s.Assert().EqualValues(dbRes.Title, secret2.Title)
-		s.Assert().EqualValues(dbRes.Description, secret2.Description)
-		s.Assert().EqualValues(dbRes.SecretID, secret2.SecretID)
-		s.Assert().EqualValues(dbRes.SecretVer, secret2.SecretVer)
-		s.Assert().EqualValues(dbRes.StatusID, secret2.StatusID)
-
-	})
-
-	s.dropSecretsTable()
-
-	s.Run("Update not exist", func() {
-		secret1 := getMockSecret()
-		secret1.ID = 201
-
-		err := s.storage.UpdateSecretBySecretID(secret1)
-		s.Require().Error(err)
-	})
-
-	s.dropSecretsTable()
-
-	s.Run("Update secretID nil", func() {
-		secret1 := getMockSecret()
-		secret1.ID = 201
-		secret1.SecretID = uuid.Nil
-
-		err := s.storage.UpdateSecretBySecretID(secret1)
-		s.Require().Error(err)
-	})
-
-	s.dropSecretsTable()
-}
 
 func (s *TestSuite) TestStorage_UpdateSecretByID() {
 	s.Run("Update exist", func() {
@@ -152,6 +98,12 @@ func (s *TestSuite) TestStorage_Add_Get() {
 		s.Assert().EqualValues(testSecret.SecretVer, dbSecret.SecretVer)
 		s.Assert().EqualValues(testSecret.StatusID, dbSecret.StatusID)
 		s.Assert().EqualValues(testSecret.SecretData, dbSecret.SecretData)
+	})
+
+	s.Run("Get not exist", func() {
+		_, err := s.storage.GetSecret(564)
+		s.Require().Error(err)
+		s.Require().True(errors.Is(err, model.ErrorItemNotFound))
 	})
 
 	s.dropSecretsTable()

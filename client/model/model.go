@@ -1,6 +1,11 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"advdiploma/client/pkg"
+	"encoding/json"
+	"github.com/google/uuid"
+	"log"
+)
 
 var (
 	SecretTypes = map[string]int{
@@ -11,9 +16,10 @@ var (
 	}
 
 	SecretStatuses = map[string]int{
-		"NEW":      1,
-		"UPLOAD":   2,
-		"DOWNLOAD": 3,
+		"NEW":         1,
+		"EDITED":      2,
+		"ACTUAL":      3,
+		"SEND_DELETE": 4,
 	}
 )
 
@@ -51,6 +57,10 @@ type Auth struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
+type Text struct {
+	Info
+	Text string `json:"text"`
+}
 
 func (a *Auth) GetInfo() Info {
 	return a.Info
@@ -72,4 +82,13 @@ type Secret struct {
 	StatusID  int
 
 	SecretData string
+}
+
+func (s *Info) FromEncodedData(enc string, masterKey string) error {
+	decData, err := pkg.Decode(enc, masterKey)
+	if err != nil {
+		log.Fatal("error:", err)
+	}
+
+	return json.Unmarshal(decData, s)
 }

@@ -4,7 +4,7 @@ import (
 	"advdiploma/client/model"
 	"advdiploma/client/storage"
 	"database/sql"
-	"fmt"
+	"errors"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
@@ -82,29 +82,22 @@ func (s *Storage) UpdateSecret(v model.Secret) error {
 	exists, err := res.RowsAffected()
 
 	if exists == 0 {
-		return fmt.Errorf("item not found")
+		return model.ErrorItemNotFound
 	}
 
 	return nil
 }
 
 //  UpdateSecret adds new secret to storage
-func (s *Storage) UpdateSecretBySecretID(v model.Secret) error {
-	if v.SecretID == uuid.Nil {
-		return fmt.Errorf("secret id must be not nil")
-	}
-	query := `
-		UPDATE secrets
-		SET status_id = ?, type_id = ?, title=?, description=?, secret_ver=?, secret_data=?
-		WHERE secret_id = ?;
-`
+func (s *Storage) DeleteSecret(id int64) error {
+	query := `DELETE FROM secrets WHERE id = ?`
 
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
 		return err
 	}
 
-	res, err := stmt.Exec(v.StatusID, v.TypeID, v.Title, v.Description, v.SecretVer, v.SecretData, v.SecretID)
+	res, err := stmt.Exec(id)
 	if err != nil {
 		return err
 	}
@@ -112,11 +105,41 @@ func (s *Storage) UpdateSecretBySecretID(v model.Secret) error {
 	exists, err := res.RowsAffected()
 
 	if exists == 0 {
-		return fmt.Errorf("item not found")
+		return model.ErrorItemNotFound
 	}
 
 	return nil
 }
+
+//  UpdateSecret adds new secret to storage
+//func (s *Storage) UpdateSecretBySecretID(v model.Secret) error {
+//	if v.SecretID == uuid.Nil {
+//		return fmt.Errorf("secret id must be not nil")
+//	}
+//	query := `
+//		UPDATE secrets
+//		SET status_id = ?, type_id = ?, title=?, description=?, secret_ver=?, secret_data=?
+//		WHERE secret_id = ?;
+//`
+//
+//	stmt, err := s.db.Prepare(query)
+//	if err != nil {
+//		return err
+//	}
+//
+//	res, err := stmt.Exec(v.StatusID, v.TypeID, v.Title, v.Description, v.SecretVer, v.SecretData, v.SecretID)
+//	if err != nil {
+//		return err
+//	}
+//
+//	exists, err := res.RowsAffected()
+//
+//	if exists == 0 {
+//		return fmt.Errorf("item not found")
+//	}
+//
+//	return nil
+//}
 
 //  GetSecret returns secret from storage
 func (s *Storage) GetSecret(id int64) (model.Secret, error) {
@@ -133,8 +156,36 @@ func (s *Storage) GetSecret(id int64) (model.Secret, error) {
 		&res.SecretID,
 		&res.SecretVer,
 		&res.SecretData); err != nil {
+		if errors.Is(sql.ErrNoRows, err) {
+			return model.Secret{}, model.ErrorItemNotFound
+		}
 		return model.Secret{}, err
 	}
+
+	return res, nil
+}
+
+//  GetSecret returns secret from storage
+func (s *Storage) GetSecretByExtID(extID uuid.UUID) (model.Secret, error) {
+	res := model.Secret{}
+	if err := s.db.QueryRow(
+		"SELECT id, status_id, type_id, title, description, secret_id, secret_ver, secret_data FROM secrets WHERE secret_id=@secret_id",
+		sql.Named("secret_id", extID),
+	).Scan(
+		&res.ID,
+		&res.StatusID,
+		&res.TypeID,
+		&res.Title,
+		&res.Description,
+		&res.SecretID,
+		&res.SecretVer,
+		&res.SecretData); err != nil {
+		if errors.Is(sql.ErrNoRows, err) {
+			return model.Secret{}, model.ErrorItemNotFound
+		}
+		return model.Secret{}, err
+	}
+
 	return res, nil
 }
 

@@ -11,8 +11,48 @@ type LoginRequest struct {
 
 type SecretRequest struct {
 	Data string    `json:"data,omitempty"`
-	ID   uuid.UUID `json:"id"`
-	Ver  int       `json:"ver"`
+	ID   uuid.UUID `json:"id,omitempty"`
+	Ver  int       `json:"ver,omitempty"`
+}
+
+func (s *SecretRequest) IsValidResponseUpload() bool {
+	return s.ID != uuid.Nil && s.Ver > 0
+}
+
+func (s *SecretRequest) IsValidResponseDownload() bool {
+	return s.ID != uuid.Nil && s.Ver > 0 && len(s.Data) > 0
+}
+
+func (s *SecretRequest) IsValidUpload() bool {
+	if s.ID == uuid.Nil && s.Ver > 1 {
+		return false
+	}
+	if s.Ver == 0 {
+		return false
+	}
+	if len(s.Data) == 0 {
+		return false
+	}
+	return true
+}
+func (s *SecretRequest) IsValidDelete() bool {
+	if s.ID == uuid.Nil {
+		return false
+	}
+	if len(s.Data) != 0 || s.Ver > 0 {
+		return false
+	}
+	return true
+}
+
+func (s *SecretRequest) IsValidDownload() bool {
+	if s.ID == uuid.Nil {
+		return false
+	}
+	if len(s.Data) != 0 || s.Ver > 0 {
+		return false
+	}
+	return true
 }
 
 type SyncResponse struct {

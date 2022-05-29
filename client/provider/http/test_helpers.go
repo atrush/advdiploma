@@ -34,7 +34,7 @@ var (
 		RegisterURL: "/api/user/register",
 		SecretURL:   "/api/secret",
 		SyncListURL: "/api/sync",
-		Timeout:     time.Millisecond * 200,
+		Timeout:     time.Millisecond * 500,
 	}
 )
 

@@ -11,12 +11,12 @@ import (
 	"testing"
 )
 
-func GetTestSecretSvc(t *testing.T, storage storage.Storage) *SecretService {
-	cfg := &pkg.Config{
-		MasterKey: "testKey",
-	}
+var cfg = pkg.Config{
+	MasterKey: "testKey",
+}
 
-	svcSecret := NewSecret(cfg, storage)
+func GetTestSecretSvc(t *testing.T, storage storage.Storage) *SecretService {
+	svcSecret := NewSecret(&cfg, storage)
 	return &svcSecret
 }
 
@@ -44,7 +44,8 @@ func TestCard_ToSecret(t *testing.T) {
 			secret, err := secretSvc.ToSecret(tt.obj)
 			require.NoError(t, err)
 
-			info, err := secretSvc.ReadInfoFromSecret(secret.SecretData)
+			info := model.Info{}
+			err = info.FromEncodedData(secret.SecretData, cfg.MasterKey)
 			require.NoError(t, err)
 
 			resObj, err := secretSvc.ReadFromSecret(secret)
