@@ -1,0 +1,98 @@
+{
+   "Local": [
+      {
+         "_comment_":"SecretID nil, status NEW - exist locally, upload to remote - UPLOAD_NEW",
+         "ID": 1,
+         "SecretID": "00000000-0000-0000-0000-000000000000",
+         "SecretVer": 1,
+         "StatusID": 1
+      },
+      {
+         "_comment_":"SecretID nil, status DELETED - exist and deleted locally, not uploaded - DELETE_LOCALLY",
+         "ID": 2,
+         "SecretID": "00000000-0000-0000-0000-000000000000",
+         "SecretVer": 8,
+         "StatusID": 4
+      },
+      {
+         "_comment_":"if SecretID not nil and not exist remote - delete locally - DELETE_LOCALLY",
+         "ID": 3,
+         "SecretID": "451b3821-0119-4580-8775-dfce45d57414",
+         "SecretVer": 8,
+         "StatusID": 3
+      },
+      {
+         "_comment_":"if status DELETED and exist remote - send delete - SEND_DELETE",
+         "ID": 4,
+         "SecretID": "4dde036d-8518-480e-82d4-b2afa709e843",
+         "SecretVer": 20,
+         "StatusID": 4
+      },
+      {
+         "_comment_":"if locally has no changes and remote have newer version - DOWNLOAD",
+         "ID": 5,
+         "SecretID": "48ae886d-8747-43f3-b69d-033d9ccec774",
+         "SecretVer": 2,
+         "StatusID": 3
+      },
+      {
+         "_comment_":"if locally has changes and remote have newer version - COLLISION",
+         "ID": 6,
+         "SecretID": "5a75be85-debd-4714-9db1-540cd7b30edf",
+         "SecretVer": 19,
+         "StatusID": 2
+      },
+      {
+         "_comment_":"if locally has changes and version is actual - UPLOAD",
+         "ID": 7,
+         "SecretID": "58b0a4dc-dbef-45be-b8b1-b95ee495a58a",
+         "SecretVer": 6,
+         "StatusID": 2
+      }
+   ],
+   "Remote": {
+      "4dde036d-8518-480e-82d4-b2afa709e843": 20,
+      "48ae886d-8747-43f3-b69d-033d9ccec774": 3,
+      "5a75be85-debd-4714-9db1-540cd7b30edf": 20,
+      "58b0a4dc-dbef-45be-b8b1-b95ee495a58a": 6,
+      "0c227ceb-0241-468d-991c-02ffee23c68a": 1
+   },
+   "SyncList": [
+      {
+         "LocID": 1,
+         "Ver": 1,
+         "ActionID": 1
+      },
+      {
+         "LocID": 2,
+         "ActionID": 4
+      },
+      {
+         "LocID": 3,
+         "ActionID": 4
+      },
+      {
+         "SecretId": "4dde036d-8518-480e-82d4-b2afa709e843",
+         "ActionID": 5
+      },
+      {
+         "SecretId": "48ae886d-8747-43f3-b69d-033d9ccec774",
+         "ActionID": 3
+      },
+      {
+         "LocID": 6,
+         "SecretId": "5a75be85-debd-4714-9db1-540cd7b30edf",
+         "Ver": 20,
+         "ActionID": 6
+      },
+      {
+         "SecretId": "58b0a4dc-dbef-45be-b8b1-b95ee495a58a",
+         "Ver": 6,
+         "ActionID": 2
+      },
+      {
+         "SecretId": "0c227ceb-0241-468d-991c-02ffee23c68a",
+         "ActionID": 3
+      }
+   ]
+}

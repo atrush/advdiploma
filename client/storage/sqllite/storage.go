@@ -190,11 +190,11 @@ func (s *Storage) GetSecretByExtID(extID uuid.UUID) (model.Secret, error) {
 }
 
 //  GetInfoForUser returns array of info secrets
-func (s *Storage) GetMetaList() ([]model.Secret, error) {
-	var list []model.Secret
+func (s *Storage) GetMetaList() ([]model.SecretMeta, error) {
+	var list []model.SecretMeta
 
 	rows, err := s.db.Query(
-		"SELECT id, status_id, type_id, title, description, secret_id, secret_ver FROM secrets")
+		"SELECT id, status_id, secret_id, secret_ver FROM secrets")
 
 	if err != nil {
 		return nil, err
@@ -206,8 +206,8 @@ func (s *Storage) GetMetaList() ([]model.Secret, error) {
 	}()
 
 	for rows.Next() {
-		var el model.Secret
-		err = rows.Scan(&el.ID, &el.StatusID, &el.TypeID, &el.Title, &el.Description, &el.SecretID, &el.SecretVer)
+		var el model.SecretMeta
+		err = rows.Scan(&el.ID, &el.StatusID, &el.SecretID, &el.SecretVer)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +220,7 @@ func (s *Storage) GetMetaList() ([]model.Secret, error) {
 	}
 
 	if len(list) == 0 {
-		list = make([]model.Secret, 0)
+		list = make([]model.SecretMeta, 0)
 	}
 
 	return list, nil

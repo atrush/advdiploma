@@ -7,8 +7,8 @@ type HTTPConfig struct {
 	AuthURL     string
 	RegisterURL string
 	SyncListURL string
+	SecretURL   string
 
-	SecretURL string
-
+	PingURL string
 	Timeout time.Duration
 }

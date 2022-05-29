@@ -16,10 +16,10 @@ var (
 	}
 
 	SecretStatuses = map[string]int{
-		"NEW":         1,
-		"EDITED":      2,
-		"ACTUAL":      3,
-		"SEND_DELETE": 4,
+		"NEW":     1,
+		"EDITED":  2,
+		"ACTUAL":  3,
+		"DELETED": 4,
 	}
 )
 
@@ -82,6 +82,12 @@ type Secret struct {
 	StatusID  int
 
 	SecretData string
+}
+type SecretMeta struct {
+	ID        int64
+	SecretID  uuid.UUID
+	SecretVer int
+	StatusID  int
 }
 
 func (s *Info) FromEncodedData(enc string, masterKey string) error {

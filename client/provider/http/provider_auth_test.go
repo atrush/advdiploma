@@ -12,7 +12,7 @@ func TestProvider_Auth(t *testing.T) {
 	authSrvConfig := srvBaseCfg.New(
 		withReturnHeaders(map[string]string{"Authorization": token}),
 		withReqMethod(http.MethodPost),
-		withReqBody(mustMarshalLoginRequest(authData)),
+		withReqBody(mustMarshal(authData)),
 		withReqURL(provBaseCfg.AuthURL),
 	)
 
@@ -86,7 +86,7 @@ func TestProvider_Register(t *testing.T) {
 	regSrvConfig := srvBaseCfg.New(
 		withReturnHeaders(map[string]string{"Authorization": token}),
 		withReqMethod(http.MethodPost),
-		withReqBody(mustMarshalLoginRequest(authData)),
+		withReqBody(mustMarshal(authData)),
 		withReqURL(provBaseCfg.RegisterURL),
 	)
 

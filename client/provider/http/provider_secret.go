@@ -21,8 +21,8 @@ func (p *HTTPProvider) UploadSecret(data string, id uuid.UUID, ver int) (uuid.UU
 		ID:   id,
 		Ver:  ver,
 	}
-	if !reqData.IsValidUpload() {
-		return uuid.Nil, 0, fmt.Errorf("%w : not valid upload param", model.ErrorParamNotValid)
+	if err := reqData.ValidateUpload(); err != nil {
+		return uuid.Nil, 0, err
 	}
 
 	resp := prmodel.SecretRequest{}
@@ -112,7 +112,7 @@ func (p *HTTPProvider) processSecretRequest(req prmodel.SecretRequest, method st
 	//  if body not empty unmarshal
 	if len(respBody) > 0 {
 		if err := json.Unmarshal(respBody, resp); err != nil {
-			return fmt.Errorf("secret %v response error: %w", method, err)
+			return fmt.Errorf("secret %v response error: %w body: %v ", method, err, respBody)
 		}
 	}
 

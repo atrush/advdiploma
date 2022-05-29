@@ -2,12 +2,28 @@ package services
 
 import (
 	"advdiploma/client/model"
+	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"log"
 )
 
+//  Upload uploads secret to server and updates local SecretID and version
+//  If UPLOAD_NEW - task exist only local, get by id
+//  If UPLOAD - task was synch and have SecretID, get by secret id
+//  If response 200, write secret meta data from response and set status ACTUAL
 func (s *SyncService) Upload(task SyncTask) error {
-	secret, err := s.db.GetSecret(task.LocID)
+	var secret model.Secret
+	var err error
+
+	if task.ActionID == SyncActions["UPLOAD_NEW"] {
+		secret, err = s.db.GetSecret(task.LocID)
+	}
+
+	if task.ActionID == SyncActions["UPLOAD"] {
+		secret, err = s.db.GetSecretByExtID(task.SecretId)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -17,18 +33,25 @@ func (s *SyncService) Upload(task SyncTask) error {
 		return err
 	}
 
+	if secret.SecretID != uuid.Nil && secret.SecretID != id {
+		return errors.New("error upload sync: response secretID not equal local")
+	}
+
 	secret.SecretVer = ver
 	secret.SecretID = id
+	secret.StatusID = model.SecretStatuses["ACTUAL"]
 
 	if err := s.db.UpdateSecret(secret); err != nil {
-		return err
+		return fmt.Errorf("error upload sync: error save secret meta info: %w", err)
 	}
 
 	return nil
 }
 
+//  Download downloads secret from server
+//  If response 200, updates local data and meta.
+//  If local not exists, creates new
 func (s *SyncService) Download(task SyncTask) error {
-
 	id, ver, data, err := s.provider.DownloadSecret(task.SecretId)
 	if err != nil {
 		return err
@@ -39,40 +62,44 @@ func (s *SyncService) Download(task SyncTask) error {
 		return fmt.Errorf("error read info drom encoded secret data: %w", err)
 	}
 
-	if task.LocID == 0 {
-		_, err := s.db.AddSecret(model.Secret{
-			Info:       info,
-			SecretID:   id,
-			SecretVer:  ver,
-			SecretData: data,
-			StatusID:   model.SecretStatuses["ACTUAL"],
-		})
-		if err != nil {
-			return fmt.Errorf("error save secret data to storage: %w", err)
+	dbSecret, err := s.db.GetSecretByExtID(id)
+	if err != nil {
+		// if not found add new
+		if errors.Is(err, model.ErrorItemNotFound) {
+			_, err := s.db.AddSecret(model.Secret{
+				Info:       info,
+				SecretID:   id,
+				SecretVer:  ver,
+				StatusID:   model.SecretStatuses["ACTUAL"],
+				SecretData: data,
+			})
+
+			if err != nil {
+				return fmt.Errorf("error save secret data to storage: %w", err)
+			}
+
+			return nil
 		}
 
-		return nil
-	}
-
-	dbSecret, err := s.db.GetSecretByExtID(task.SecretId)
-	if err != nil {
 		return fmt.Errorf("error save secret data to storage: %w", err)
 	}
 
+	dbSecret.Info = info
 	dbSecret.SecretData = data
 	dbSecret.SecretVer = ver
-	dbSecret.Info = info
 	dbSecret.StatusID = model.SecretStatuses["ACTUAL"]
 
 	if err := s.db.UpdateSecret(dbSecret); err != nil {
-		return err
+		return fmt.Errorf("error save secret data to storage: %w", err)
 	}
 
 	return nil
 }
 
-func (s *SyncService) Delete(task SyncTask) error {
-	secret, err := s.db.GetSecret(task.LocID)
+//  DeleteRemote deletes secret from server
+//  If response 200, mark local secret status as DELETED.
+func (s *SyncService) DeleteRemote(task SyncTask) error {
+	secret, err := s.db.GetSecretByExtID(task.SecretId)
 	if err != nil {
 		return err
 	}
@@ -82,30 +109,47 @@ func (s *SyncService) Delete(task SyncTask) error {
 	}
 
 	secret.StatusID = model.SecretStatuses["DELETED"]
+
 	err = s.db.UpdateSecret(secret)
 	if err != nil {
-		log.Println(err.Error())
 		return err
 	}
 
 	return nil
 }
 
-func (s *SyncService) ProcessTask(task SyncTask) {
+//  DeleteLocally deletes secret from local database
+func (s *SyncService) DeleteLocally(task SyncTask) error {
+	return s.db.DeleteSecret(task.LocID)
+}
+
+//  DeleteLocally deletes secret from local database
+func (s *SyncService) AddCollision(task SyncTask) error {
+	return nil
+}
+
+func (s *SyncService) ProcessTask(task SyncTask) error {
+	log.Printf("task started %+v", task)
 	switch task.ActionID {
 
-	case SyncActions["UPLOAD"]:
+	case SyncActions["UPLOAD"], SyncActions["UPLOAD_NEW"]:
 		if err := s.Upload(task); err != nil {
-			log.Println(err.Error())
+			return err
 		}
 	case SyncActions["DOWNLOAD"]:
 		if err := s.Download(task); err != nil {
-			log.Println(err.Error())
+			return err
 		}
-
 	case SyncActions["SEND_DELETE"]:
-		if err := s.Delete(task); err != nil {
-			log.Println(err.Error())
+		if err := s.DeleteRemote(task); err != nil {
+			return err
+		}
+	case SyncActions["DELETE_LOCALLY"]:
+		if err := s.DeleteLocally(task); err != nil {
+			return err
 		}
 	}
+	log.Printf("task processed %+v", task)
+
+	return nil
 }

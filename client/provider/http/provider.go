@@ -2,6 +2,10 @@ package http
 
 import (
 	"advdiploma/client/provider"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
 )
 
 var _ provider.SecretProvider = (*HTTPProvider)(nil)
@@ -16,4 +20,34 @@ func NewHTTPProvider(cfg HTTPConfig) *HTTPProvider {
 		client: NewTokenClient(cfg.Timeout),
 		cfg:    cfg,
 	}
+}
+
+// Ping checks connection with server and authentication
+func (p *HTTPProvider) PingAuth() error {
+	request, err := http.NewRequest(http.MethodGet, p.cfg.BaseURL+p.cfg.PingURL, nil)
+	if err != nil {
+		return fmt.Errorf("ping request error: %w", err)
+	}
+
+	//  do request
+	response, err := p.client.DoWithAuth(request)
+	if err != nil {
+		return fmt.Errorf("ping request error: %w", err)
+	}
+
+	//  read body
+	respBody, err := io.ReadAll(response.Body)
+	if err != nil {
+		return fmt.Errorf("request error: %w", err)
+	}
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("ping request error: wrong response: %v - %v", response.StatusCode, respBody)
+	}
+	return nil
 }

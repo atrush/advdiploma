@@ -33,14 +33,14 @@ func TestProviderSync_GetList(t *testing.T) {
 		{
 			name: "get exist list",
 			serverCfg: syncSrvConfig.New(
-				withReturnBody(mustMarshalSyncResponse(respData))),
+				withReturnBody(mustMarshal(respData))),
 			reqErr:  assert.NoError,
 			reqList: okList,
 		},
 		{
 			name: "too long request",
 			serverCfg: syncSrvConfig.New(
-				withReturnBody(mustMarshalSyncResponse(respData)),
+				withReturnBody(mustMarshal(respData)),
 				withSleep(provBaseCfg.Timeout+time.Millisecond*200)),
 			reqErr: assert.Error,
 		},

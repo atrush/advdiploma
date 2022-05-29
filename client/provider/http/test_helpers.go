@@ -34,9 +34,18 @@ var (
 		RegisterURL: "/api/user/register",
 		SecretURL:   "/api/secret",
 		SyncListURL: "/api/sync",
+		PingURL:     "/api/ping",
 		Timeout:     time.Millisecond * 500,
 	}
 )
+
+func mustMarshal(val interface{}) string {
+	res, err := json.Marshal(val)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(res)
+}
 
 func getMockSyncList(count int) map[uuid.UUID]int {
 	res := make(map[uuid.UUID]int)
@@ -46,21 +55,4 @@ func getMockSyncList(count int) map[uuid.UUID]int {
 	}
 
 	return res
-}
-
-func mustMarshalLoginRequest(val model.LoginRequest) string {
-	res, err := json.Marshal(val)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return string(res)
-}
-
-func mustMarshalSyncResponse(src model.SyncResponse) string {
-	res, err := json.Marshal(src)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	return string(res)
 }

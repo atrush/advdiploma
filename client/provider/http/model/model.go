@@ -1,6 +1,10 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"advdiploma/client/model"
+	"fmt"
+	"github.com/google/uuid"
+)
 
 type LoginRequest struct {
 	Login      string    `json:"login"`
@@ -23,17 +27,17 @@ func (s *SecretRequest) IsValidResponseDownload() bool {
 	return s.ID != uuid.Nil && s.Ver > 0 && len(s.Data) > 0
 }
 
-func (s *SecretRequest) IsValidUpload() bool {
+func (s *SecretRequest) ValidateUpload() error {
 	if s.ID == uuid.Nil && s.Ver > 1 {
-		return false
+		return fmt.Errorf("%w: ver is %v and secret id is nil", model.ErrorParamNotValid, s.Ver)
 	}
 	if s.Ver == 0 {
-		return false
+		return fmt.Errorf("%w: ver is %v", model.ErrorParamNotValid, s.Ver)
 	}
 	if len(s.Data) == 0 {
-		return false
+		return fmt.Errorf("%w: data is empty", model.ErrorParamNotValid)
 	}
-	return true
+	return nil
 }
 func (s *SecretRequest) IsValidDelete() bool {
 	if s.ID == uuid.Nil {

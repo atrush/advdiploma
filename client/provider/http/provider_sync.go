@@ -19,7 +19,7 @@ func (p *HTTPProvider) GetSyncList() (map[uuid.UUID]int, error) {
 	request.Header.Set("content-type", "application/json")
 
 	//  do request
-	response, err := p.client.Do(request)
+	response, err := p.client.DoWithAuth(request)
 	if err != nil {
 		return nil, fmt.Errorf("request error: %w", err)
 	}

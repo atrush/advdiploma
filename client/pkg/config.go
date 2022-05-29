@@ -10,8 +10,9 @@ import (
 
 //  Config stores server config params.
 type Config struct {
-	MasterKey   string `env:"MASTER_KEY"`
-	SyncTimeout time.Duration
+	MasterKey         string `env:"MASTER_KEY"`
+	SyncTimeout       time.Duration
+	RequestsPerMinute int
 }
 
 //  Default config params.

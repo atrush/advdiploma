@@ -62,11 +62,25 @@ func (mr *MockStorageMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockStorage)(nil).Close))
 }
 
+// DeleteSecret mocks base method.
+func (m *MockStorage) DeleteSecret(id int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSecret", id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSecret indicates an expected call of DeleteSecret.
+func (mr *MockStorageMockRecorder) DeleteSecret(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSecret", reflect.TypeOf((*MockStorage)(nil).DeleteSecret), id)
+}
+
 // GetMetaList mocks base method.
-func (m *MockStorage) GetMetaList() ([]model.Secret, error) {
+func (m *MockStorage) GetMetaList() ([]model.SecretMeta, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMetaList")
-	ret0, _ := ret[0].([]model.Secret)
+	ret0, _ := ret[0].([]model.SecretMeta)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

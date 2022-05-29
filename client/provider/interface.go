@@ -13,4 +13,6 @@ type SecretProvider interface {
 	UploadSecret(data string, id uuid.UUID, ver int) (uuid.UUID, int, error)
 	DownloadSecret(id uuid.UUID) (uuid.UUID, int, string, error)
 	DeleteSecret(id uuid.UUID) error
+
+	PingAuth() error
 }

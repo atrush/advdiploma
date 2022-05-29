@@ -50,6 +50,9 @@ func (c *TokenClient) DoWithAuth(req *http.Request) (*http.Response, error) {
 	req.Header.Add("Authorization", *c.apiToken)
 
 	resp, err := c.Do(req)
+	if err != nil {
+		return nil, err
+	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		c.DropAuth()

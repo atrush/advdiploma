@@ -49,7 +49,7 @@ func (s *SecretService) addSecret(obj interface{}) (int64, error) {
 
 	secret.StatusID = model.SecretStatuses["NEW"]
 	secret.SecretID = uuid.Nil
-	secret.SecretVer = 0
+	secret.SecretVer = 1
 
 	id, err := s.db.AddSecret(secret)
 
@@ -81,8 +81,14 @@ func (s *SecretService) addSecret(obj interface{}) (int64, error) {
 //	}
 //
 //	return nil
-//}
+//	}
+
 func (s *SecretService) UpdateSecret(secret model.Secret) error {
+	//  if el secret id == nil, el not uploaded to server, must stay status NEW
+	if secret.SecretID != uuid.Nil {
+		secret.StatusID = model.SecretStatuses["EDITED"]
+	}
+
 	if err := s.db.UpdateSecret(secret); err != nil {
 		return err
 	}
@@ -182,27 +188,19 @@ func (s *SecretService) ReadFromSecret(el model.Secret) (interface{}, error) {
 	return nil, errors.New("wrong TypeID")
 }
 
-func (s *SecretService) DeleteSecret(id int64) error {
-
+func (s *SecretService) DeleteSoftSecret(id int64) error {
 	dbSecret, err := s.db.GetSecret(id)
 	if err != nil {
 		//  if not found ok
 		if errors.Is(err, model.ErrorItemNotFound) {
 			return nil
 		}
+
 		return err
 	}
 
-	//  if secret id is nil, not uploaded to server, just delete
-	//  if secret id not nil, but status send-delete, and delete was send, delete
-	if dbSecret.SecretID != uuid.Nil && dbSecret.StatusID != model.SecretStatuses["SEND_DELETE"] {
-		return errors.New("Can't delete not synch record")
-	}
-
-	if err := s.db.DeleteSecret(id); err != nil {
-		if errors.Is(err, model.ErrorItemNotFound) {
-			return nil
-		}
+	dbSecret.StatusID = model.SecretStatuses["DELETED"]
+	if err := s.db.UpdateSecret(dbSecret); err != nil {
 
 		return err
 	}
