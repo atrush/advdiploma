@@ -64,8 +64,8 @@ func (r *secretRepository) Get(ctx context.Context, id uuid.UUID, userID uuid.UU
 func (r *secretRepository) Update(ctx context.Context, el model.Secret) error {
 	query := `
 		UPDATE secrets
-		SET ver = $2, ver = $3, user_id = $4, data=$5, is_deleted = $6
-		WHERE id = $1 AND user_id = $4;
+		SET ver = $2, user_id = $3, data=$4, is_deleted = $5
+		WHERE id = $1 AND user_id = $3;
 `
 
 	stmt, err := r.db.Prepare(query)

@@ -19,6 +19,7 @@ require (
 	github.com/stretchr/testify v1.7.1
 	github.com/testcontainers/testcontainers-go v0.13.0
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
+	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
 )
 
 require (

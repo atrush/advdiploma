@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
+	"net/http"
 )
 
 type Handler struct {
@@ -41,7 +42,8 @@ func GetRouter(handler *Handler) *chi.Mux {
 		r.Use(jwtauth.Verifier(tokenAuth))
 		r.Use(apimiddleware.MiddlewareAuth)
 
-		r.Put("/api/sync", handler.SyncList)
+		r.Get("/api/sync", handler.SyncList)
+		r.Get("/api/ping", handler.Ping)
 
 		// Secret processing
 		r.Put("/api/secret", handler.SecretUpload)
@@ -51,4 +53,9 @@ func GetRouter(handler *Handler) *chi.Mux {
 	})
 
 	return r
+}
+
+//  Ping returns 200
+func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
+	h.writeJSONResponse(w, http.StatusOK, "ok")
 }

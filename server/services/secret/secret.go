@@ -95,3 +95,10 @@ func (s *Secret) Get(ctx context.Context, id uuid.UUID, userID uuid.UUID) (model
 
 	return s.storage.Secret().Get(ctx, id, userID)
 }
+
+func (s *Secret) GetUserSyncList(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]int, error) {
+	if userID == uuid.Nil {
+		return nil, fmt.Errorf("%w: userr id is nil", model.ErrorParamNotValid)
+	}
+	return s.storage.Secret().GetUserVersionList(ctx, userID)
+}

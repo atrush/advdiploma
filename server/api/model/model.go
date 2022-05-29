@@ -24,6 +24,10 @@ type (
 		UserID   uuid.UUID
 		DeviceID uuid.UUID
 	}
+
+	SyncResponse struct {
+		List map[uuid.UUID]int `json:"list"`
+	}
 )
 
 func (r LoginRequest) Validate() error {

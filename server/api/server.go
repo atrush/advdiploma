@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-chi/jwtauth/v5"
+	"log"
 	"net/http"
 )
 
@@ -36,6 +37,8 @@ func NewServer(cfg *pkg.Config, a auth.Authenticator, secret secret.SecretManage
 
 // Run Start server
 func (s *Server) Run() error {
+	log.Printf("starting HTTP server on %v", s.cfg.ServerPort)
+
 	if s.cfg.EnableHTTPS {
 		certPath, keyPath, err := pkg.GetCertX509Files()
 		if err != nil {

@@ -67,7 +67,7 @@ func (h *Handler) SecretDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSONResponse(w, http.StatusOK, "")
+	h.writeJSONResponse(w, http.StatusOK, nil)
 }
 
 //  SecretGet deletes secret

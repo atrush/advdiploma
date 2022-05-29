@@ -16,7 +16,7 @@ var user = model.User{
 
 func (s *TestSuite) TestSecret_AddGet() {
 	s.Run("Get not existed", func() {
-		_, err := s.storage.Secret().Get(s.ctx, uuid.New())
+		_, err := s.storage.Secret().Get(s.ctx, uuid.New(), uuid.New())
 		s.Require().Error(err)
 		s.Require().True(errors.Is(err, model.ErrorItemNotFound))
 	})
@@ -31,7 +31,7 @@ func (s *TestSuite) TestSecret_AddGet() {
 		secret.ID, err = s.storage.Secret().Add(s.ctx, secret)
 		s.Require().NoError(err)
 
-		secretRes, err := s.storage.Secret().Get(s.ctx, secret.ID)
+		secretRes, err := s.storage.Secret().Get(s.ctx, secret.ID, user.ID)
 		s.Require().NoError(err)
 
 		s.Assert().EqualValues(secret.ID, secretRes.ID)

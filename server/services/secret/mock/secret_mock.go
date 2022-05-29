@@ -80,3 +80,18 @@ func (mr *MockSecretManagerMockRecorder) Get(ctx, id, userID interface{}) *gomoc
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockSecretManager)(nil).Get), ctx, id, userID)
 }
+
+// GetUserSyncList mocks base method.
+func (m *MockSecretManager) GetUserSyncList(ctx context.Context, userID uuid.UUID) (map[uuid.UUID]int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserSyncList", ctx, userID)
+	ret0, _ := ret[0].(map[uuid.UUID]int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserSyncList indicates an expected call of GetUserSyncList.
+func (mr *MockSecretManagerMockRecorder) GetUserSyncList(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserSyncList", reflect.TypeOf((*MockSecretManager)(nil).GetUserSyncList), ctx, userID)
+}
