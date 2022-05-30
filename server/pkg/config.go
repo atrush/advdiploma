@@ -62,7 +62,7 @@ func (c *Config) readFlagConfig() {
 
 	flag.StringVar(&flagConfig.ServerPort, "p", defServerPort, "port for HTTP-server <:port>")
 	flag.StringVar(&flagConfig.DatabaseDSN, "d", defDatabaseDSN, "database connection string")
-	flag.BoolVar(&flagConfig.EnableHTTPS, "https", defEnableHTTPS, "enable https")
+	flag.BoolVar(&flagConfig.EnableHTTPS, "s", defEnableHTTPS, "enable https")
 
 	//devFlags := flag.NewFlagSet("dev", flag.ExitOnError)
 	flag.BoolVar(&flagConfig.Migrate, "migrate", defMigrate, "enable migrate database")

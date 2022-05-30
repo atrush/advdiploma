@@ -125,6 +125,9 @@ func (s *SyncService) DeleteLocally(task SyncTask) error {
 
 //  DeleteLocally deletes secret from local database
 func (s *SyncService) AddCollision(task SyncTask) error {
+	// todo: add collision select in UI,
+	// use external version - delete local, then ext version downloads on sync
+	// use local version - set loc ver as external
 	return nil
 }
 
