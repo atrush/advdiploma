@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 var _ provider.SecretProvider = (*HTTPProvider)(nil)
@@ -16,8 +17,10 @@ type HTTPProvider struct {
 }
 
 func NewHTTPProvider(cfg HTTPConfig) *HTTPProvider {
+	withTLS := strings.HasPrefix(cfg.BaseURL, "https://")
+
 	return &HTTPProvider{
-		client: NewTokenClient(cfg.Timeout),
+		client: NewTokenClient(cfg.Timeout, withTLS),
 		cfg:    cfg,
 	}
 }

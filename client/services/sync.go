@@ -30,7 +30,7 @@ func NewSyncService(db storage.Storage, provider provider.SecretProvider, cfg *p
 }
 
 func (s *SyncService) Run(ctx context.Context) error {
-	ticker := time.NewTicker(s.cfg.SyncTimeout)
+	ticker := time.NewTicker(time.Second * time.Duration(s.cfg.SyncTimeoutSec))
 
 	go func() {
 		defer func() {
@@ -41,7 +41,7 @@ func (s *SyncService) Run(ctx context.Context) error {
 			select {
 			case <-ticker.C:
 				if err := s.provider.PingAuth(); err != nil {
-					log.Println(err.Error())
+					//log.Println(err.Error())
 					break
 				}
 
@@ -57,7 +57,7 @@ func (s *SyncService) Run(ctx context.Context) error {
 
 				s.tick(ctx, batch)
 			case <-ctx.Done():
-				log.Println("accrual worker context done")
+				log.Println("worker context done")
 				return
 			}
 		}

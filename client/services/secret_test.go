@@ -35,6 +35,16 @@ func TestCard_ToSecret(t *testing.T) {
 			obj:     model.TestCard,
 			storage: storageEmpty(ctrl),
 		},
+		{
+			name:    "text",
+			obj:     model.TestText,
+			storage: storageEmpty(ctrl),
+		},
+		{
+			name:    "auth",
+			obj:     model.TestAuth,
+			storage: storageEmpty(ctrl),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -53,10 +63,20 @@ func TestCard_ToSecret(t *testing.T) {
 
 			switch resObj.(type) {
 			case model.Card:
-				srcCard := tt.obj.(model.Card)
-				resCard := resObj.(model.Card)
-				require.Equal(t, srcCard.Info, info)
-				require.Equal(t, tt.obj, resCard)
+				src := tt.obj.(model.Card)
+				res := resObj.(model.Card)
+				require.Equal(t, src.Info, info)
+				require.Equal(t, tt.obj, res)
+			case model.Auth:
+				src := tt.obj.(model.Auth)
+				res := resObj.(model.Auth)
+				require.Equal(t, src.Info, info)
+				require.Equal(t, tt.obj, res)
+			case model.Text:
+				src := tt.obj.(model.Text)
+				res := resObj.(model.Text)
+				require.Equal(t, src.Info, info)
+				require.Equal(t, tt.obj, res)
 
 			default:
 				t.Error("wrong type")

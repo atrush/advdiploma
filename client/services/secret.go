@@ -7,7 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"path/filepath"
 )
 
 type SecretService struct {
@@ -35,10 +38,18 @@ func (s *SecretService) AddCard(el model.Card) (int64, error) {
 	return s.addSecret(el)
 }
 
-func (s *SecretService) AddBinary(el model.Card) (int64, error) {
-	//todo read file
+func (s *SecretService) AddBinary(filePath string) (int64, error) {
+	b := model.Binary{}
 
-	return s.addSecret(el)
+	bytes, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	b.Filename = filepath.Base(filePath)
+	b.ContentType = http.DetectContentType(bytes)
+	b.Data = bytes
+
+	return s.addSecret(b)
 }
 
 func (s *SecretService) addSecret(obj interface{}) (int64, error) {
@@ -146,6 +157,15 @@ func (s *SecretService) ToSecret(i interface{}) (model.Secret, error) {
 		info = bin.Info
 		data, errMarshal = json.Marshal(bin)
 
+	case model.Text:
+		txt, ok := i.(model.Text)
+		if !ok {
+			return model.Secret{}, errors.New("wrong Text type")
+		}
+
+		info = txt.Info
+		data, errMarshal = json.Marshal(txt)
+
 	default:
 		return model.Secret{}, errors.New("wrong type")
 	}
@@ -183,6 +203,36 @@ func (s *SecretService) ReadFromSecret(el model.Secret) (interface{}, error) {
 		card.Info = el.Info
 
 		return card, nil
+
+	case model.SecretTypes["AUTH"]:
+		var auth model.Auth
+		if err := json.Unmarshal(decData, &auth); err != nil {
+			return nil, errors.New("object is not Auth type")
+		}
+
+		auth.Info = el.Info
+
+		return auth, nil
+
+	case model.SecretTypes["TEXT"]:
+		var txt model.Text
+		if err := json.Unmarshal(decData, &txt); err != nil {
+			return nil, errors.New("object is not Text type")
+		}
+
+		txt.Info = el.Info
+
+		return txt, nil
+
+	case model.SecretTypes["BINARY"]:
+		var bn model.Text
+		if err := json.Unmarshal(decData, &bn); err != nil {
+			return nil, errors.New("object is not Binary type")
+		}
+
+		bn.Info = el.Info
+
+		return bn, nil
 	}
 
 	return nil, errors.New("wrong TypeID")

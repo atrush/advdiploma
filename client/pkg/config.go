@@ -4,20 +4,24 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/caarlos0/env/v6"
-	"time"
 )
 
 //  Config stores server config params.
 type Config struct {
-	MasterKey         string `env:"MASTER_KEY"`
-	SyncTimeout       time.Duration
+	MasterKey         string
+	SyncTimeoutSec    int
 	RequestsPerMinute int
+	ServerURL         string
+	StorageFile       string
 }
 
 //  Default config params.
 const (
-	defMasterKey = "mytestmasterkey"
+	defMasterKey         = "mytestmasterkey"
+	defSyncTimeout       = 2
+	defRequestsPerMinute = 100
+	defServerURL         = "https://localhost:8085"
+	defStorageFile       = "storage.db"
 )
 
 //  NewConfig inits new config.
@@ -26,9 +30,6 @@ func NewConfig() (*Config, error) {
 	cfg := Config{}
 
 	cfg.readFlagConfig()
-	if err := cfg.readEnvConfig(); err != nil {
-		return nil, err
-	}
 
 	if err := cfg.Validate(); err != nil {
 		return nil, fmt.Errorf("ошибка инициализации конфига: %w", err)
@@ -41,6 +42,19 @@ func (c *Config) Validate() error {
 	if len(c.MasterKey) == 0 {
 		return errors.New("master key is empty")
 	}
+	if len(c.ServerURL) == 0 {
+		return errors.New("server url is empty")
+	}
+	if len(c.StorageFile) == 0 {
+		return errors.New("storage filename is empty")
+	}
+	if c.SyncTimeoutSec == 0 {
+		return errors.New("sync timeout is 0")
+	}
+	if c.RequestsPerMinute == 0 {
+		return errors.New("requests per minute is 0")
+	}
+
 	return nil
 }
 
@@ -48,8 +62,12 @@ func (c *Config) Validate() error {
 func (c *Config) readFlagConfig() {
 	flagConfig := &Config{}
 	flag.StringVar(&flagConfig.MasterKey, "m", defMasterKey, "master key")
-	flag.Parse()
+	flag.IntVar(&flagConfig.SyncTimeoutSec, "t", defSyncTimeout, "sync timeout in seconds")
+	flag.IntVar(&flagConfig.RequestsPerMinute, "r", defRequestsPerMinute, "sync action requests per minute")
+	flag.StringVar(&flagConfig.ServerURL, "s", defServerURL, "server address http(s)://<address>:<port>")
+	flag.StringVar(&flagConfig.StorageFile, "db", defStorageFile, "storage filename")
 
+	flag.Parse()
 	c.redefineConfig(flagConfig)
 }
 
@@ -60,16 +78,16 @@ func (c *Config) redefineConfig(nc *Config) {
 	if nc.MasterKey != "" {
 		c.MasterKey = nc.MasterKey
 	}
-}
-
-//  readEnvConfig redefines config params with environment params.
-func (c *Config) readEnvConfig() error {
-	envConfig := &Config{}
-
-	if err := env.Parse(envConfig); err != nil {
-		return fmt.Errorf("ошибка чтения переменных окружения:%w", err)
+	if nc.StorageFile != "" {
+		c.StorageFile = nc.StorageFile
 	}
-
-	c.redefineConfig(envConfig)
-	return nil
+	if nc.ServerURL != "" {
+		c.ServerURL = nc.ServerURL
+	}
+	if nc.SyncTimeoutSec != 0 {
+		c.SyncTimeoutSec = nc.SyncTimeoutSec
+	}
+	if nc.RequestsPerMinute != 0 {
+		c.RequestsPerMinute = nc.RequestsPerMinute
+	}
 }

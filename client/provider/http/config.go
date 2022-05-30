@@ -9,6 +9,7 @@ type HTTPConfig struct {
 	SyncListURL string
 	SecretURL   string
 
-	PingURL string
-	Timeout time.Duration
+	PingURL           string
+	Timeout           time.Duration
+	RequestsPerMinute int
 }

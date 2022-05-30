@@ -8,4 +8,4 @@ migrate:
 	go run cmd/server/main.go -d "postgres://postgres:postgres@localhost:5432/tstdb?sslmode=disable" -t "tstdb" -migrate true
 
 srvrun:
-	go run cmd/server/main.go -d "postgres://postgres:postgres@localhost:5432/tstdb?sslmode=disable" -t "tstdb" -p ":8085"
+	go run cmd/server/main.go -d "postgres://postgres:postgres@localhost:5432/tstdb?sslmode=disable" -t "tstdb" -p ":8085" -s true

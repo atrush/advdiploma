@@ -12,7 +12,7 @@ import (
 )
 
 func TestTokenClient_SetToken(t *testing.T) {
-	client := NewTokenClient(time.Second * 5)
+	client := NewTokenClient(time.Second*5, false)
 	testTokenClient(t, client, "")
 
 	token := fake.CharactersN(32)
