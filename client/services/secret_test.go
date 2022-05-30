@@ -24,6 +24,9 @@ func TestCard_ToSecret(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	binary, err := SecretService{}.ReadBinary("test_img.svg")
+	require.NoError(t, err)
+
 	tests := []struct {
 		name    string
 		obj     interface{}
@@ -43,6 +46,11 @@ func TestCard_ToSecret(t *testing.T) {
 		{
 			name:    "auth",
 			obj:     model.TestAuth,
+			storage: storageEmpty(ctrl),
+		},
+		{
+			name:    "binary",
+			obj:     binary,
 			storage: storageEmpty(ctrl),
 		},
 	}
@@ -75,6 +83,11 @@ func TestCard_ToSecret(t *testing.T) {
 			case model.Text:
 				src := tt.obj.(model.Text)
 				res := resObj.(model.Text)
+				require.Equal(t, src.Info, info)
+				require.Equal(t, tt.obj, res)
+			case model.Binary:
+				src := tt.obj.(model.Binary)
+				res := resObj.(model.Binary)
 				require.Equal(t, src.Info, info)
 				require.Equal(t, tt.obj, res)
 

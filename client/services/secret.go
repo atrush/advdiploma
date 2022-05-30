@@ -38,16 +38,33 @@ func (s *SecretService) AddCard(el model.Card) (int64, error) {
 	return s.addSecret(el)
 }
 
-func (s *SecretService) AddBinary(filePath string) (int64, error) {
-	b := model.Binary{}
+func (s SecretService) ReadBinary(filePath string) (model.Binary, error) {
+	b := model.Binary{
+		Info: model.Info{
+			TypeID: model.SecretTypes["BINARY"],
+		},
+	}
 
 	bytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	b.Filename = filepath.Base(filePath)
 	b.ContentType = http.DetectContentType(bytes)
 	b.Data = bytes
+
+	return b, nil
+}
+
+func (s *SecretService) AddBinary(filePath string, title string, description string) (int64, error) {
+	b, err := s.ReadBinary(filePath)
+	if err != nil {
+		return 0, nil
+	}
+
+	b.Title = title
+	b.Description = description
 
 	return s.addSecret(b)
 }
@@ -70,29 +87,6 @@ func (s *SecretService) addSecret(obj interface{}) (int64, error) {
 
 	return id, nil
 }
-
-//func (s *SecretService) UpdateSecret(id int64, obj interface{}) error {
-//	secret, err := s.ToSecret(obj)
-//	if err != nil {
-//		return err
-//	}
-//
-//	dbSecret, err := s.db.GetSecret(id)
-//	if err != nil {
-//		return err
-//	}
-//
-//	dbSecret.Info = secret.Info
-//	dbSecret.SecretData = secret.SecretData
-//	dbSecret.StatusID = model.SecretStatuses["UPDATED"]
-//
-//	err = s.db.UpdateSecret(dbSecret)
-//	if err != nil {
-//		return err
-//	}
-//
-//	return nil
-//	}
 
 func (s *SecretService) UpdateSecret(secret model.Secret) error {
 	//  if el secret id == nil, el not uploaded to server, must stay status NEW
@@ -225,7 +219,7 @@ func (s *SecretService) ReadFromSecret(el model.Secret) (interface{}, error) {
 		return txt, nil
 
 	case model.SecretTypes["BINARY"]:
-		var bn model.Text
+		var bn model.Binary
 		if err := json.Unmarshal(decData, &bn); err != nil {
 			return nil, errors.New("object is not Binary type")
 		}
