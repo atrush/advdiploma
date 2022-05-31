@@ -2,14 +2,9 @@ package services
 
 import (
 	"advdiploma/client/model"
-	"encoding/json"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"log"
 	"math/rand"
-	"os"
 	"testing"
 )
 
@@ -17,82 +12,117 @@ var (
 	testFile = "sync_test_case.json"
 )
 
-type syncCase struct {
-	Local    []model.SecretMeta
-	Remote   map[uuid.UUID]int
-	SyncList []SyncTask
+type syncTest struct {
+	name   string
+	ext    map[uuid.UUID]int
+	loc    []model.SecretMeta
+	reqErr require.ErrorAssertionFunc
+	result []SyncTask
 }
 
-func TestSync_CalcSyncBatch(t *testing.T) {
-	syncCase := readSyncCase()
+func TestSync_CalcSync(t *testing.T) {
+	secretID := uuid.New()
+	nilUUID := uuid.Nil
+	locID := rand.Int63n(100) + 1
+	ver := rand.Intn(100) + 1
 
-	syncResult, err := SyncService{}.CalcSyncBatch(syncCase.Remote, syncCase.Local)
+	tests := []syncTest{
+		//  new secretID == nil
+		{
+			name:   "new status new - upload",
+			loc:    []model.SecretMeta{{SecretID: nilUUID, ID: locID, SecretVer: 1, StatusID: model.SecretStatuses["NEW"]}},
+			result: []SyncTask{taskUploadNew(locID, 1)},
+			reqErr: require.NoError,
+		},
+		{name: "new status edited - upload",
+			loc:    []model.SecretMeta{{SecretID: nilUUID, ID: locID, SecretVer: 1, StatusID: model.SecretStatuses["EDITED"]}},
+			result: []SyncTask{taskUploadNew(locID, 1)},
 
-	require.NoError(t, err)
-	for i, el := range syncCase.SyncList {
-		assert.EqualValues(t, el.Ver, syncResult[i].Ver, "ver")
-		assert.EqualValues(t, el.LocID, syncResult[i].LocID, "loc id")
-		assert.EqualValues(t, el.SecretId, syncResult[i].SecretId, "secretID")
-		assert.EqualValues(t, el.ActionID, syncResult[i].ActionID, "action id")
+			reqErr: require.NoError,
+		},
+		{
+			name:   "new status deleted - delete hard",
+			loc:    []model.SecretMeta{{SecretID: nilUUID, ID: locID, SecretVer: 1, StatusID: model.SecretStatuses["DELETED"]}},
+			result: []SyncTask{taskDeleteLocally(locID)},
+			reqErr: require.NoError,
+		},
+
+		//  exist secretID != nil, deleted not in ext list
+		{
+			name:   "exist edited/deleted - delete hard",
+			loc:    []model.SecretMeta{{SecretID: secretID, ID: locID, SecretVer: ver, StatusID: model.SecretStatuses["EDITED"]}},
+			result: []SyncTask{taskDeleteLocally(locID)},
+			reqErr: require.NoError,
+		},
+		{
+			name:   "exist deleted/deleted - delete hard",
+			loc:    []model.SecretMeta{{SecretID: secretID, ID: locID, SecretVer: ver, StatusID: model.SecretStatuses["DELETED"]}},
+			result: []SyncTask{taskDeleteLocally(locID)},
+			reqErr: require.NoError,
+		},
+		{
+			name:   "exist actual/deleted - delete hard",
+			loc:    []model.SecretMeta{{SecretID: secretID, ID: locID, SecretVer: ver, StatusID: model.SecretStatuses["ACTUAL"]}},
+			result: []SyncTask{taskDeleteLocally(locID)},
+			reqErr: require.NoError,
+		},
+
+		//  exist secretID != nil, ext no changes ver.loc == ver.ext
+		{
+			name:   "exist edited/no changes - upload",
+			loc:    []model.SecretMeta{{SecretID: secretID, ID: locID, SecretVer: ver, StatusID: model.SecretStatuses["EDITED"]}},
+			ext:    map[uuid.UUID]int{secretID: ver},
+			result: []SyncTask{taskUpload(secretID, ver)},
+			reqErr: require.NoError,
+		},
+		{
+			name:   "exist deleted/no changes - send delete",
+			loc:    []model.SecretMeta{{SecretID: secretID, ID: locID, SecretVer: ver, StatusID: model.SecretStatuses["DELETED"]}},
+			ext:    map[uuid.UUID]int{secretID: ver},
+			result: []SyncTask{taskDeleteRemote(secretID)},
+			reqErr: require.NoError,
+		},
+
+		{
+			name:   "exist actual/no changes - nil",
+			loc:    []model.SecretMeta{{SecretID: secretID, ID: locID, SecretVer: ver, StatusID: model.SecretStatuses["ACTUAL"]}},
+			ext:    map[uuid.UUID]int{secretID: ver},
+			result: []SyncTask{},
+			reqErr: require.NoError,
+		},
+
+		//  exist secretID != nil, ext changed ver.loc < ver.ext
+		{
+			name:   "exist edited/ changed - collision",
+			loc:    []model.SecretMeta{{SecretID: secretID, ID: locID, SecretVer: ver, StatusID: model.SecretStatuses["EDITED"]}},
+			ext:    map[uuid.UUID]int{secretID: ver + 1},
+			result: []SyncTask{taskCollision(locID, secretID, ver+1)},
+			reqErr: require.NoError,
+		},
+
+		{
+			name:   "exist deleted/ changed - send delete",
+			loc:    []model.SecretMeta{{SecretID: secretID, ID: locID, SecretVer: ver, StatusID: model.SecretStatuses["DELETED"]}},
+			ext:    map[uuid.UUID]int{secretID: ver + 1},
+			result: []SyncTask{taskDeleteRemote(secretID)},
+			reqErr: require.NoError,
+		},
+
+		{
+			name:   "exist actual/ changed - download",
+			loc:    []model.SecretMeta{{SecretID: secretID, ID: locID, SecretVer: ver, StatusID: model.SecretStatuses["ACTUAL"]}},
+			ext:    map[uuid.UUID]int{secretID: ver + 1},
+			result: []SyncTask{taskDownload(secretID)},
+			reqErr: require.NoError,
+		},
 	}
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			syncResult, err := SyncService{}.CalcSyncBatch(tt.ext, tt.loc)
 
-func readSyncCase() *syncCase {
-	file, err := ioutil.ReadFile(testFile)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+			tt.reqErr(t, err)
+			require.Equal(t, tt.result, syncResult)
+		})
 
-	data := syncCase{}
-	if err := json.Unmarshal([]byte(file), &data); err != nil {
-		log.Fatal(err.Error())
-	}
-
-	return &data
-}
-func genBaseSyncCase(count int) {
-	loc := make([]model.SecretMeta, count)
-	rm := make(map[uuid.UUID]int, count)
-	syncList := make([]SyncTask, count)
-
-	for i := 0; i < count; i++ {
-		loc[i] = getMockSecret(i + 1)
-		rm[loc[i].SecretID] = loc[i].SecretVer
-
-		syncList[i] = SyncTask{
-			LocID:    loc[i].ID,
-			SecretId: loc[i].SecretID,
-			Ver:      loc[i].SecretVer,
-			ActionID: SyncActions["UPLOAD"],
-		}
-	}
-
-	js, err := json.MarshalIndent(syncCase{
-		Local:    loc,
-		Remote:   rm,
-		SyncList: syncList,
-	}, "", "   ")
-
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	f, err := os.Create(testFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer f.Close()
-
-	if _, err := f.Write(js); err != nil {
-		log.Fatal(err)
-	}
-}
-func getMockSecret(id int) model.SecretMeta {
-	return model.SecretMeta{
-		ID:        int64(id),
-		SecretVer: rand.Intn(20) + 1,
-		SecretID:  uuid.New(),
-		StatusID:  model.SecretStatuses["ACTUAL"],
 	}
 }

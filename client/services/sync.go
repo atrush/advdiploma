@@ -119,7 +119,7 @@ func (s SyncService) CalcSyncBatch(rm map[uuid.UUID]int, loc []model.SecretMeta)
 		//  SecretID is nil - non sync local elements
 		if el.SecretID == uuid.Nil {
 			//  if status NEW - UPLOAD
-			if el.StatusID == model.SecretStatuses["NEW"] {
+			if el.StatusID == model.SecretStatuses["NEW"] || el.StatusID == model.SecretStatuses["EDITED"] {
 				tasks = append(tasks, taskUploadNew(el.ID, el.SecretVer))
 				continue
 			}
