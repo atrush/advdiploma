@@ -5,6 +5,7 @@ import (
 	"advdiploma/server/storage"
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/google/uuid"
 	"log"
 )
@@ -55,6 +56,10 @@ func (r *secretRepository) Get(ctx context.Context, id uuid.UUID, userID uuid.UU
 		&res.Data,
 		&res.IsDeleted,
 	); err != nil {
+		if errors.Is(sql.ErrNoRows, err) {
+			return model.Secret{}, model.ErrorItemNotFound
+		}
+
 		return model.Secret{}, err
 	}
 

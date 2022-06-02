@@ -31,9 +31,6 @@ func NewStorage(dsn string) (*Storage, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
-	//if err := initBase(db); err != nil {
-	//	return nil, err
-	//}
 
 	st := &Storage{
 		db:           db,

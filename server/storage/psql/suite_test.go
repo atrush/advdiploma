@@ -18,14 +18,11 @@ type TestSuite struct {
 
 	container *testtool.PostgreSQLContainer
 	storage   *Storage
-	//fixtures  fixtures.Fixtures
 
 	ctx context.Context
 }
 
 func (s *TestSuite) SetupSuite() {
-	//ctx, ctxCancel := context.WithTimeout(context.Background(), 90*time.Second)
-	//defer ctxCancel()
 
 	ctx := context.Background()
 
@@ -37,13 +34,9 @@ func (s *TestSuite) SetupSuite() {
 	st, err := NewStorage(c.GetDSN())
 	s.Require().NoError(err)
 
-	//fixtures, err := fixtures.LoadFixtures(ctx, st.db)
-	//s.Require().NoError(err)
-
 	s.ctx = context.TODO()
 	s.container = c
 	s.storage = st
-	//	s.fixtures = fixtures
 }
 
 func (s *TestSuite) TearDownSuite() {
