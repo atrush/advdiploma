@@ -2,6 +2,7 @@ package sqllite
 
 import (
 	"advdiploma/client/model"
+	"advdiploma/client/pkg"
 	"advdiploma/client/storage"
 	"database/sql"
 	"errors"
@@ -21,7 +22,8 @@ CREATE TABLE IF NOT EXISTS secrets (
 	description TEXT,
 	secret_data TEXT NOT NULL,
 	secret_id UUID,
-	secret_ver INT
+	secret_ver INT,
+	time_stamp INTEGER NOT NULL
   );`
 
 type Storage struct {
@@ -43,12 +45,12 @@ func NewStorage(file string) (*Storage, error) {
 
 //  AddSecret adds new secret to storage
 func (s *Storage) AddSecret(v model.Secret) (int64, error) {
-	stmt, err := s.db.Prepare("INSERT INTO secrets(status_id, type_id, title, description, secret_id, secret_ver, secret_data) VALUES(?,?,?,?,?,?,?)")
+	stmt, err := s.db.Prepare("INSERT INTO secrets(status_id, type_id, title, description, secret_id, secret_ver, secret_data, time_stamp) VALUES(?,?,?,?,?,?,?,?)")
 	if err != nil {
 		return 0, err
 	}
 
-	r, err := stmt.Exec(v.StatusID, v.TypeID, v.Title, v.Description, v.SecretID, v.SecretVer, v.SecretData)
+	r, err := stmt.Exec(v.StatusID, v.TypeID, v.Title, v.Description, v.SecretID, v.SecretVer, v.SecretData, pkg.MakeTimestamp())
 	if err != nil {
 		return 0, err
 	}
@@ -65,8 +67,8 @@ func (s *Storage) AddSecret(v model.Secret) (int64, error) {
 func (s *Storage) UpdateSecret(v model.Secret) error {
 	query := `
 		UPDATE secrets
-		SET status_id = ?, type_id = ?, title=?, description=?, secret_id=?, secret_ver=?, secret_data=?
-		WHERE id = ?;
+		SET status_id = ?, type_id = ?, title=?, description=?, secret_id=?, secret_ver=?, secret_data=?,time_stamp=?
+		WHERE id = ? AND time_stamp = ?;
 `
 
 	stmt, err := s.db.Prepare(query)
@@ -74,7 +76,7 @@ func (s *Storage) UpdateSecret(v model.Secret) error {
 		return err
 	}
 
-	res, err := stmt.Exec(v.StatusID, v.TypeID, v.Title, v.Description, v.SecretID, v.SecretVer, v.SecretData, v.ID)
+	res, err := stmt.Exec(v.StatusID, v.TypeID, v.Title, v.Description, v.SecretID, v.SecretVer, v.SecretData, pkg.MakeTimestamp(), v.ID, v.TimeStamp)
 	if err != nil {
 		return err
 	}
@@ -145,7 +147,7 @@ func (s *Storage) DeleteSecret(id int64) error {
 func (s *Storage) GetSecret(id int64) (model.Secret, error) {
 	res := model.Secret{Info: model.Info{}}
 	if err := s.db.QueryRow(
-		"SELECT id, status_id, type_id, title, description, secret_id, secret_ver, secret_data FROM secrets WHERE id=@id",
+		"SELECT id, status_id, type_id, title, description, secret_id, secret_ver, secret_data, time_stamp FROM secrets WHERE id=@id",
 		sql.Named("id", id),
 	).Scan(
 		&res.ID,
@@ -155,7 +157,8 @@ func (s *Storage) GetSecret(id int64) (model.Secret, error) {
 		&res.Description,
 		&res.SecretID,
 		&res.SecretVer,
-		&res.SecretData); err != nil {
+		&res.SecretData,
+		&res.TimeStamp); err != nil {
 		if errors.Is(sql.ErrNoRows, err) {
 			return model.Secret{}, model.ErrorItemNotFound
 		}
@@ -169,7 +172,7 @@ func (s *Storage) GetSecret(id int64) (model.Secret, error) {
 func (s *Storage) GetSecretByExtID(extID uuid.UUID) (model.Secret, error) {
 	res := model.Secret{}
 	if err := s.db.QueryRow(
-		"SELECT id, status_id, type_id, title, description, secret_id, secret_ver, secret_data FROM secrets WHERE secret_id=@secret_id",
+		"SELECT id, status_id, type_id, title, description, secret_id, secret_ver, secret_data, time_stamp FROM secrets WHERE secret_id=@secret_id",
 		sql.Named("secret_id", extID),
 	).Scan(
 		&res.ID,
@@ -179,7 +182,8 @@ func (s *Storage) GetSecretByExtID(extID uuid.UUID) (model.Secret, error) {
 		&res.Description,
 		&res.SecretID,
 		&res.SecretVer,
-		&res.SecretData); err != nil {
+		&res.SecretData,
+		&res.TimeStamp); err != nil {
 		if errors.Is(sql.ErrNoRows, err) {
 			return model.Secret{}, model.ErrorItemNotFound
 		}
@@ -194,7 +198,7 @@ func (s *Storage) GetMetaList() ([]model.SecretMeta, error) {
 	var list []model.SecretMeta
 
 	rows, err := s.db.Query(
-		"SELECT id, status_id, secret_id, secret_ver FROM secrets")
+		"SELECT id, status_id, secret_id, secret_ver, time_stamp FROM secrets")
 
 	if err != nil {
 		return nil, err
@@ -207,7 +211,7 @@ func (s *Storage) GetMetaList() ([]model.SecretMeta, error) {
 
 	for rows.Next() {
 		var el model.SecretMeta
-		err = rows.Scan(&el.ID, &el.StatusID, &el.SecretID, &el.SecretVer)
+		err = rows.Scan(&el.ID, &el.StatusID, &el.SecretID, &el.SecretVer, &el.TimeStamp)
 		if err != nil {
 			return nil, err
 		}

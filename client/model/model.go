@@ -80,6 +80,7 @@ type Secret struct {
 	SecretID  uuid.UUID
 	SecretVer int
 	StatusID  int
+	TimeStamp int64
 
 	SecretData string
 }
@@ -88,6 +89,7 @@ type SecretMeta struct {
 	SecretID  uuid.UUID
 	SecretVer int
 	StatusID  int
+	TimeStamp int64
 }
 
 func (s *Info) FromEncodedData(enc string, masterKey string) error {

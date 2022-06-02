@@ -50,7 +50,6 @@ func (s *SyncService) Upload(task SyncTask) error {
 
 //  Download downloads secret from server
 //  If response 200, updates local data and meta.
-//  If local not exists, creates new
 func (s *SyncService) Download(task SyncTask) error {
 	id, ver, data, err := s.provider.DownloadSecret(task.SecretId)
 	if err != nil {
@@ -64,32 +63,43 @@ func (s *SyncService) Download(task SyncTask) error {
 
 	dbSecret, err := s.db.GetSecretByExtID(id)
 	if err != nil {
-		// if not found add new
-		if errors.Is(err, model.ErrorItemNotFound) {
-			_, err := s.db.AddSecret(model.Secret{
-				Info:       info,
-				SecretID:   id,
-				SecretVer:  ver,
-				StatusID:   model.SecretStatuses["ACTUAL"],
-				SecretData: data,
-			})
-
-			if err != nil {
-				return fmt.Errorf("error save secret data to storage: %w", err)
-			}
-
-			return nil
-		}
-
 		return fmt.Errorf("error save secret data to storage: %w", err)
 	}
 
 	dbSecret.Info = info
-	dbSecret.SecretData = data
 	dbSecret.SecretVer = ver
 	dbSecret.StatusID = model.SecretStatuses["ACTUAL"]
+	dbSecret.SecretData = data
 
 	if err := s.db.UpdateSecret(dbSecret); err != nil {
+		return fmt.Errorf("error save secret data to storage: %w", err)
+	}
+
+	return nil
+}
+
+//  DownloadNew downloads secret from server
+//  If response 200, creates new local data.
+func (s *SyncService) DownloadNew(task SyncTask) error {
+	id, ver, data, err := s.provider.DownloadSecret(task.SecretId)
+	if err != nil {
+		return err
+	}
+
+	info := model.Info{}
+	if err := info.FromEncodedData(data, s.cfg.MasterKey); err != nil {
+		return fmt.Errorf("error read info drom encoded secret data: %w", err)
+	}
+
+	_, err = s.db.AddSecret(model.Secret{
+		Info:       info,
+		SecretID:   id,
+		SecretVer:  ver,
+		StatusID:   model.SecretStatuses["ACTUAL"],
+		SecretData: data,
+	})
+
+	if err != nil {
 		return fmt.Errorf("error save secret data to storage: %w", err)
 	}
 
@@ -143,6 +153,10 @@ func (s *SyncService) ProcessTask(task SyncTask) error {
 		if err := s.Download(task); err != nil {
 			return err
 		}
+	case SyncActions["DOWNLOAD_NEW"]:
+		if err := s.DownloadNew(task); err != nil {
+			return err
+		}
 	case SyncActions["SEND_DELETE"]:
 		if err := s.DeleteRemote(task); err != nil {
 			return err
@@ -151,7 +165,12 @@ func (s *SyncService) ProcessTask(task SyncTask) error {
 		if err := s.DeleteLocally(task); err != nil {
 			return err
 		}
+	case SyncActions["COLLISION"]:
+		if err := s.AddCollision(task); err != nil {
+			return err
+		}
 	}
+
 	log.Printf("task processed %+v", task)
 
 	return nil

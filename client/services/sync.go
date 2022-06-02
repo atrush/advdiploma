@@ -120,13 +120,13 @@ func (s SyncService) CalcSyncBatch(rm map[uuid.UUID]int, loc []model.SecretMeta)
 		if el.SecretID == uuid.Nil {
 			//  if status NEW - UPLOAD
 			if el.StatusID == model.SecretStatuses["NEW"] || el.StatusID == model.SecretStatuses["EDITED"] {
-				tasks = append(tasks, taskUploadNew(el.ID, el.SecretVer))
+				tasks = append(tasks, taskUploadNew(el))
 				continue
 			}
 
 			//  if status DELETED - delete locally
 			if el.StatusID == model.SecretStatuses["DELETED"] {
-				tasks = append(tasks, taskDeleteLocally(el.ID))
+				tasks = append(tasks, taskDeleteLocally(el))
 				continue
 			}
 
@@ -142,21 +142,21 @@ func (s SyncService) CalcSyncBatch(rm map[uuid.UUID]int, loc []model.SecretMeta)
 
 		if !remExist {
 			// if SecretID not nil and not exist remote - delete locally
-			tasks = append(tasks, taskDeleteLocally(el.ID))
+			tasks = append(tasks, taskDeleteLocally(el))
 			continue
 		}
 
 		// if status DELETED and exist remote - send delete
 		if el.StatusID == model.SecretStatuses["DELETED"] {
 			// send delete
-			tasks = append(tasks, taskDeleteRemote(el.SecretID))
+			tasks = append(tasks, taskDeleteRemote(el))
 			continue
 		}
 
 		//  if locally has no changes and remote have newer version - download
 		if remVer > el.SecretVer && el.StatusID == model.SecretStatuses["ACTUAL"] {
 			// download
-			tasks = append(tasks, taskDownload(el.SecretID))
+			tasks = append(tasks, taskDownload(el))
 			continue
 		}
 
@@ -164,14 +164,14 @@ func (s SyncService) CalcSyncBatch(rm map[uuid.UUID]int, loc []model.SecretMeta)
 		//  add collision
 		if remVer > el.SecretVer && el.StatusID == model.SecretStatuses["EDITED"] {
 			// task collision
-			tasks = append(tasks, taskCollision(el.ID, el.SecretID, remVer))
+			tasks = append(tasks, taskCollision(el, remVer))
 			continue
 		}
 
 		//  if locally has changes and version is actual
 		//  upload
 		if remVer == el.SecretVer && el.StatusID == model.SecretStatuses["EDITED"] {
-			tasks = append(tasks, taskUpload(el.SecretID, el.SecretVer))
+			tasks = append(tasks, taskUpload(el))
 			continue
 		}
 
@@ -181,43 +181,79 @@ func (s SyncService) CalcSyncBatch(rm map[uuid.UUID]int, loc []model.SecretMeta)
 	for k, _ := range rm {
 		_, ok := locListMap[k]
 		if !ok {
-			tasks = append(tasks, taskDownload(k))
+			tasks = append(tasks, taskDownloadNew(k))
 		}
 	}
 	return tasks, nil
 }
 
-func taskUploadNew(locID int64, ver int) SyncTask {
+// DEleted - обновить secretID, и версию, пометить на удаление
+// EDITED - обновить secretID, и версию, статус edited
+
+func taskUploadNew(meta model.SecretMeta) SyncTask {
 	return SyncTask{
-		LocID:    locID,
-		Ver:      ver,
-		ActionID: SyncActions["UPLOAD_NEW"]} //1
+		LocID:     meta.ID,
+		Ver:       meta.SecretVer,
+		ActionID:  SyncActions["UPLOAD_NEW"],
+		TimeStamp: meta.TimeStamp,
+	}
 }
-func taskUpload(secretID uuid.UUID, ver int) SyncTask {
+
+// EDITED
+func taskUpload(meta model.SecretMeta) SyncTask {
+	return SyncTask{
+		SecretId:  meta.SecretID,
+		Ver:       meta.SecretVer,
+		ActionID:  SyncActions["UPLOAD"],
+		TimeStamp: meta.TimeStamp,
+	}
+}
+
+// не существовало, загружаем - нет доступа пока не загружено
+// было актуальным, загружаем новую версию
+// DEleted - отбросить загрузку, ожидать синхронизаци на удаление
+// UPDATED - коллизия
+
+func taskDownload(meta model.SecretMeta) SyncTask {
+	return SyncTask{
+		SecretId:  meta.SecretID,
+		ActionID:  SyncActions["DOWNLOAD"],
+		TimeStamp: meta.TimeStamp,
+	}
+}
+
+func taskDownloadNew(secretID uuid.UUID) SyncTask {
 	return SyncTask{
 		SecretId: secretID,
-		Ver:      ver,
-		ActionID: SyncActions["UPLOAD"]} //2
+		ActionID: SyncActions["DOWNLOAD_NEW"],
+	}
 }
-func taskDownload(secretID uuid.UUID) SyncTask {
+
+// нет доступа т.к. deleted
+func taskDeleteLocally(meta model.SecretMeta) SyncTask {
 	return SyncTask{
-		SecretId: secretID,
-		ActionID: SyncActions["DOWNLOAD"]} //3
+		LocID:     meta.ID,
+		ActionID:  SyncActions["DELETE_LOCALLY"],
+		TimeStamp: meta.TimeStamp,
+	}
 }
-func taskDeleteLocally(locID int64) SyncTask {
+func taskDeleteRemote(meta model.SecretMeta) SyncTask {
 	return SyncTask{
-		LocID:    locID,
-		ActionID: SyncActions["DELETE_LOCALLY"]} //4
+		SecretId:  meta.SecretID,
+		ActionID:  SyncActions["SEND_DELETE"],
+		TimeStamp: meta.TimeStamp,
+	}
 }
-func taskDeleteRemote(secretID uuid.UUID) SyncTask {
+
+// if deleted - оставить удаленным
+// iа edited - оставить коллизию
+
+func taskCollision(meta model.SecretMeta, rmVersion int) SyncTask {
 	return SyncTask{
-		SecretId: secretID,
-		ActionID: SyncActions["SEND_DELETE"]} //5
-}
-func taskCollision(locID int64, secretID uuid.UUID, rmVersion int) SyncTask {
-	return SyncTask{
-		LocID:    locID,
-		SecretId: secretID,
-		Ver:      rmVersion,
-		ActionID: SyncActions["COLLISION"]} //6
+		LocID:     meta.ID,
+		SecretId:  meta.SecretID,
+		Ver:       rmVersion,
+		ActionID:  SyncActions["COLLISION"],
+		TimeStamp: meta.TimeStamp,
+	}
 }

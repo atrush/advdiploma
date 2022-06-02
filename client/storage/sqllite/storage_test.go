@@ -2,55 +2,81 @@ package sqllite
 
 import (
 	"advdiploma/client/model"
+	"advdiploma/client/pkg"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/icrowley/fake"
 )
 
-func (s *TestSuite) TestStorage_UpdateSecretByID() {
-	s.Run("Update exist", func() {
+func (s *TestSuite) TestStorage_UpdateSecret() {
+	s.runDropSecrets("Update exist", func() {
 
-		secret1 := getMockSecret()
+		toAdd := getMockSecret()
 
-		id, err := s.storage.AddSecret(secret1)
+		// add to storage
+		id, err := s.storage.AddSecret(toAdd)
 		s.Require().NoError(err)
 
-		secret1.ID = id
-
-		secret2 := getMockSecret()
-		secret2.ID = id
-
-		err = s.storage.UpdateSecret(secret2)
+		// read added
+		toAdd, err = s.storage.GetSecret(id)
 		s.Require().NoError(err)
 
-		dbRes, err := s.storage.GetSecret(id)
+		//  update field, except id and timestamp
+		toUpdate := getMockSecret()
+		toUpdate.ID = id
+		toUpdate.TimeStamp = toAdd.TimeStamp
+
+		//  update
+		err = s.storage.UpdateSecret(toUpdate)
 		s.Require().NoError(err)
 
-		s.Assert().EqualValues(dbRes.ID, secret2.ID)
-		s.Assert().EqualValues(dbRes.TypeID, secret2.TypeID)
-		s.Assert().EqualValues(dbRes.Title, secret2.Title)
-		s.Assert().EqualValues(dbRes.Description, secret2.Description)
-		s.Assert().EqualValues(dbRes.SecretID, secret2.SecretID)
-		s.Assert().EqualValues(dbRes.SecretVer, secret2.SecretVer)
-		s.Assert().EqualValues(dbRes.StatusID, secret2.StatusID)
+		// read updated
+		dbUpdated, err := s.storage.GetSecret(id)
+		s.Require().NoError(err)
 
+		s.Assert().EqualValues(dbUpdated.ID, toUpdate.ID)
+		s.Assert().EqualValues(dbUpdated.TypeID, toUpdate.TypeID)
+		s.Assert().EqualValues(dbUpdated.Title, toUpdate.Title)
+		s.Assert().EqualValues(dbUpdated.Description, toUpdate.Description)
+		s.Assert().EqualValues(dbUpdated.SecretID, toUpdate.SecretID)
+		s.Assert().EqualValues(dbUpdated.SecretVer, toUpdate.SecretVer)
+		s.Assert().EqualValues(dbUpdated.StatusID, toUpdate.StatusID)
+		s.Require().True(dbUpdated.TimeStamp > toUpdate.TimeStamp)
 	})
 
-	s.dropSecretsTable()
+	s.runDropSecrets("Update wrong timestamp", func() {
 
-	s.Run("Update not exist", func() {
+		toAdd := getMockSecret()
+
+		// add to storage
+		id, err := s.storage.AddSecret(toAdd)
+		s.Require().NoError(err)
+
+		// read added
+		toAdd, err = s.storage.GetSecret(id)
+		s.Require().NoError(err)
+
+		//  update field, except id and timestamp
+		toUpdate := getMockSecret()
+		toUpdate.ID = id
+		toUpdate.TimeStamp = pkg.MakeTimestamp()
+
+		//  update
+		err = s.storage.UpdateSecret(toUpdate)
+		s.Require().Error(err)
+	})
+
+	s.runDropSecrets("Update not exist", func() {
 		secret1 := getMockSecret()
 		secret1.ID = 201
 
 		err := s.storage.UpdateSecret(secret1)
 		s.Require().Error(err)
 	})
-
-	s.dropSecretsTable()
 }
 
 func (s *TestSuite) TestStorage_GetInfoList() {
-	s.Run("Add list and get list of info", func() {
+	s.runDropSecrets("Add list and get list of info", func() {
 		count := 10
 		arrSecrets := make([]model.Secret, count)
 
@@ -70,20 +96,16 @@ func (s *TestSuite) TestStorage_GetInfoList() {
 
 		for i, el := range infoArr {
 			s.Assert().EqualValues(arrSecrets[i].ID, el.ID)
-			s.Assert().EqualValues(arrSecrets[i].TypeID, el.TypeID)
-			s.Assert().EqualValues(arrSecrets[i].Title, el.Title)
-			s.Assert().EqualValues(arrSecrets[i].Description, el.Description)
 			s.Assert().EqualValues(arrSecrets[i].SecretID, el.SecretID)
 			s.Assert().EqualValues(arrSecrets[i].SecretVer, el.SecretVer)
 			s.Assert().EqualValues(arrSecrets[i].StatusID, el.StatusID)
+			s.Assert().NotEmpty(el.TimeStamp)
 		}
 	})
-
-	s.dropSecretsTable()
 }
 
 func (s *TestSuite) TestStorage_Add_Get() {
-	s.Run("Add and read secret", func() {
+	s.runDropSecrets("Add and read secret", func() {
 		testSecret := getMockSecret()
 
 		id, err := s.storage.AddSecret(testSecret)
@@ -98,15 +120,20 @@ func (s *TestSuite) TestStorage_Add_Get() {
 		s.Assert().EqualValues(testSecret.SecretVer, dbSecret.SecretVer)
 		s.Assert().EqualValues(testSecret.StatusID, dbSecret.StatusID)
 		s.Assert().EqualValues(testSecret.SecretData, dbSecret.SecretData)
+
+		s.Assert().NotEmpty(dbSecret.TimeStamp)
 	})
 
-	s.Run("Get not exist", func() {
+	s.runDropSecrets("Get not exist", func() {
 		_, err := s.storage.GetSecret(564)
 		s.Require().Error(err)
 		s.Require().True(errors.Is(err, model.ErrorItemNotFound))
 	})
+}
 
-	s.dropSecretsTable()
+func (s *TestSuite) runDropSecrets(name string, subtest func()) bool {
+	defer s.dropSecretsTable()
+	return s.Run(name, subtest)
 }
 
 func (s *TestSuite) dropSecretsTable() {
