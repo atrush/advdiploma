@@ -8,6 +8,10 @@ import (
 )
 
 var (
+	BuildVersion = "N/A"
+	BuildDate    = "N/A"
+	BuildCommit  = "N/A"
+
 	SecretTypes = map[string]int{
 		"CARD":   1,
 		"AUTH":   2,
