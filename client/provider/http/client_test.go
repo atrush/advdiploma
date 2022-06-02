@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/icrowley/fake"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"log"
@@ -13,7 +14,6 @@ import (
 
 func TestTokenClient_SetToken(t *testing.T) {
 	client := NewTokenClient(time.Second*5, false)
-	testTokenClient(t, client, "")
 
 	token := fake.CharactersN(32)
 	client.SetToken(token)
@@ -23,15 +23,17 @@ func TestTokenClient_SetToken(t *testing.T) {
 func testTokenClient(t *testing.T, client *TokenClient, reqToken string) {
 	server := httptest.NewServer(http.HandlerFunc(
 		func(rw http.ResponseWriter, req *http.Request) {
-			token := req.Header.Get("Authorization")
-
-			if _, err := rw.Write([]byte(token)); err != nil {
+			rToken := req.Header.Get("Authorization")
+			log.Println(rToken)
+			if _, err := rw.Write([]byte(rToken)); err != nil {
 				log.Fatal(err.Error())
 			}
 		}))
 	defer server.Close()
 
-	resp, err := client.Get(server.URL)
+	request, err := http.NewRequest(http.MethodGet, server.URL, nil)
+
+	resp, err := client.DoWithAuth(request)
 	require.NoError(t, err)
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -41,5 +43,5 @@ func testTokenClient(t *testing.T, client *TokenClient, reqToken string) {
 		}
 	}()
 
-	require.EqualValues(t, body, reqToken)
+	assert.EqualValues(t, reqToken, string(body))
 }

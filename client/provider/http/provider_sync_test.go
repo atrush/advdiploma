@@ -3,6 +3,7 @@ package http
 import (
 	"advdiploma/client/provider/http/model"
 	"github.com/google/uuid"
+	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 func TestProviderSync_GetList(t *testing.T) {
 	okList := getMockSyncList(40)
+	token := fake.CharactersN(16)
 
 	respData := model.SyncResponse{
 		List: okList,
@@ -62,6 +64,7 @@ func TestProviderSync_GetList(t *testing.T) {
 			provCfg.BaseURL = server.URL
 
 			provider := NewHTTPProvider(provCfg)
+			provider.client.SetToken(token)
 			list, err := provider.GetSyncList()
 
 			tt.reqErr(t, err)
