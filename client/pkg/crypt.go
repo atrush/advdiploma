@@ -9,6 +9,7 @@ import (
 	"errors"
 )
 
+// GenerateRandom generates random string size N
 func GenerateRandom(size int) ([]byte, error) {
 	b := make([]byte, size)
 	_, err := rand.Read(b)
@@ -18,6 +19,8 @@ func GenerateRandom(size int) ([]byte, error) {
 
 	return b, nil
 }
+
+//  Encode encodes bytes array
 func Encode(src []byte, key string) (string, error) {
 
 	if len(key) == 0 {
@@ -46,6 +49,7 @@ func Encode(src []byte, key string) (string, error) {
 	return based64, nil
 }
 
+//  Decode decodes bytes array
 func Decode(src string, key string) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(src)
 	if err != nil {

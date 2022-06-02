@@ -17,6 +17,7 @@ type serverTestConfig struct {
 }
 type serverTestParam func(*serverTestConfig)
 
+//  New inits new config whith params
 func (c *serverTestConfig) New(opts ...serverTestParam) serverTestConfig {
 	res := *c
 	if len(opts) > 0 {

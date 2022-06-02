@@ -10,6 +10,7 @@ import (
 	"net/http"
 )
 
+//  GetSyncList downloads files meta info from server
 func (p *HTTPProvider) GetSyncList() (map[uuid.UUID]int, error) {
 
 	request, err := http.NewRequest(http.MethodGet, p.cfg.BaseURL+p.cfg.SyncListURL, nil)

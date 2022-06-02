@@ -193,7 +193,7 @@ func (s *Storage) GetSecretByExtID(extID uuid.UUID) (model.Secret, error) {
 	return res, nil
 }
 
-//  GetInfoForUser returns array of info secrets
+//  GetMetaList returns array of meta info secrets
 func (s *Storage) GetMetaList() ([]model.SecretMeta, error) {
 	var list []model.SecretMeta
 

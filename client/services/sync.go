@@ -29,6 +29,8 @@ func NewSyncService(db storage.Storage, provider provider.SecretProvider, cfg *p
 	}
 }
 
+//  Run inits sync worker with timeout
+//  sync inits if ping ok
 func (s *SyncService) Run(ctx context.Context) error {
 	ticker := time.NewTicker(time.Second * time.Duration(s.cfg.SyncTimeoutSec))
 

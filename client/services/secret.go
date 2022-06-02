@@ -18,6 +18,8 @@ type SecretService struct {
 	db  storage.Storage
 }
 
+//  NewSecret returns new instanse of secret service
+//  Service manage local secrets
 func NewSecret(cfg *pkg.Config, db storage.Storage) SecretService {
 	return SecretService{
 		cfg: cfg,
@@ -25,19 +27,17 @@ func NewSecret(cfg *pkg.Config, db storage.Storage) SecretService {
 	}
 }
 
-// new -> upload
-// update ->download
-// changed -> toupload, todownload - ask collision
-// delete -> if new, delete if actual mark to delete -  post delete, deleted+ver
-
+//  AddAuth adds auth secret to storage
 func (s *SecretService) AddAuth(el model.Auth) (int64, error) {
 	return s.addSecret(el)
 }
 
+//  AddCard addds credit card secret to storage
 func (s *SecretService) AddCard(el model.Card) (int64, error) {
 	return s.addSecret(el)
 }
 
+//  ReadBinary reads binary secret from file
 func (s SecretService) ReadBinary(filePath string) (model.Binary, error) {
 	b := model.Binary{
 		Info: model.Info{
@@ -57,6 +57,7 @@ func (s SecretService) ReadBinary(filePath string) (model.Binary, error) {
 	return b, nil
 }
 
+//  AddBinary adds binary secret to storage
 func (s *SecretService) AddBinary(filePath string, title string, description string) (int64, error) {
 	b, err := s.ReadBinary(filePath)
 	if err != nil {
@@ -88,6 +89,7 @@ func (s *SecretService) addSecret(obj interface{}) (int64, error) {
 	return id, nil
 }
 
+//  UpdateSecret updates secret in storage
 func (s *SecretService) UpdateSecret(secret model.Secret) error {
 	//  if el secret id == nil, el not uploaded to server, must stay status NEW
 	if secret.SecretID != uuid.Nil {
@@ -101,6 +103,7 @@ func (s *SecretService) UpdateSecret(secret model.Secret) error {
 	return nil
 }
 
+//  GetSecret returns secret from storage by local id
 func (s *SecretService) GetSecret(id int64) (model.Secret, error) {
 	dbSecret, err := s.db.GetSecret(id)
 	if err != nil {
@@ -108,6 +111,8 @@ func (s *SecretService) GetSecret(id int64) (model.Secret, error) {
 	}
 	return dbSecret, nil
 }
+
+//  GetSecretBySecretID returns secret from storage by external id
 func (s *SecretService) GetSecretBySecretID(id uuid.UUID) (model.Secret, error) {
 	dbSecret, err := s.db.GetSecretByExtID(id)
 	if err != nil {
@@ -116,6 +121,7 @@ func (s *SecretService) GetSecretBySecretID(id uuid.UUID) (model.Secret, error) 
 	return dbSecret, nil
 }
 
+//  ToSecret converts secret object to base secret
 func (s *SecretService) ToSecret(i interface{}) (model.Secret, error) {
 
 	var info model.Info
@@ -180,6 +186,7 @@ func (s *SecretService) ToSecret(i interface{}) (model.Secret, error) {
 	}, nil
 }
 
+//  ReadFromSecret reads secret object from base secret
 func (s *SecretService) ReadFromSecret(el model.Secret) (interface{}, error) {
 
 	decData, err := pkg.Decode(el.SecretData, s.cfg.MasterKey)
@@ -232,6 +239,7 @@ func (s *SecretService) ReadFromSecret(el model.Secret) (interface{}, error) {
 	return nil, errors.New("wrong TypeID")
 }
 
+//  DeleteSoftSecret soft deletes secret
 func (s *SecretService) DeleteSoftSecret(id int64) error {
 	dbSecret, err := s.db.GetSecret(id)
 	if err != nil {

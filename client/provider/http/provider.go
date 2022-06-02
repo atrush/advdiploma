@@ -16,6 +16,8 @@ type HTTPProvider struct {
 	cfg    HTTPConfig
 }
 
+//  NewHTTPProvider returns new http provider
+//  if base url starts with https, init client with tsl config
 func NewHTTPProvider(cfg HTTPConfig) *HTTPProvider {
 	withTLS := strings.HasPrefix(cfg.BaseURL, "https://")
 
@@ -25,7 +27,7 @@ func NewHTTPProvider(cfg HTTPConfig) *HTTPProvider {
 	}
 }
 
-// Ping checks connection with server and authentication
+// PingAuth checks connection with server and authentication
 func (p *HTTPProvider) PingAuth() error {
 	request, err := http.NewRequest(http.MethodGet, p.cfg.BaseURL+p.cfg.PingURL, nil)
 	if err != nil {

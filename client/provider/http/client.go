@@ -19,6 +19,7 @@ type transport struct {
 	apiToken     *string
 }
 
+//  NewTokenClient returns new http client with custom auth inherit
 func NewTokenClient(timeout time.Duration, enableTLS bool) *TokenClient {
 	token := ""
 
@@ -61,16 +62,20 @@ func NewTokenClient(timeout time.Duration, enableTLS bool) *TokenClient {
 	}
 }
 
+//  SetToken sets auth token to client
 func (c *TokenClient) SetToken(token string) {
 	*c.apiToken = token
 	c.isAuthorised = true
 }
 
+//  DropAuth drops auth token to client
 func (c *TokenClient) DropAuth() {
 	*c.apiToken = ""
 	c.isAuthorised = false
 }
 
+//  DoWithAuth makes request with auth header
+//  returns error if client is not authenticated
 func (c *TokenClient) DoWithAuth(req *http.Request) (*http.Response, error) {
 	if len(*c.apiToken) == 0 {
 		return nil, errors.New("client not authorized")
